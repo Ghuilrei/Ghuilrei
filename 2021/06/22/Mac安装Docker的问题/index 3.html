@@ -20,30 +20,29 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
 
 <script class="next-config" data-name="main" type="application/json">{"hostname":"blog.sunyh512.cn","root":"/","images":"/images","scheme":"Gemini","version":"8.5.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":false,"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"Searching...","empty":"We didn't find any results for the search: ${query}","hits_time":"${hits} results found in ${time} ms","hits":"${hits} results found"}}</script><script src="/js/config.js"></script>
-<meta name="description" content="JVM方法区与元空间">
+<meta name="description" content="Mac上安装docker报错failed to ping backend API并卡死">
 <meta property="og:type" content="article">
-<meta property="og:title" content="JVM的方法区与元空间">
-<meta property="og:url" content="http://blog.sunyh512.cn/2021/08/03/%E6%96%B9%E6%B3%95%E5%8C%BA%E4%B8%8E%E5%85%83%E7%A9%BA%E9%97%B4/index.html">
+<meta property="og:title" content="Mac上安装docker卡死">
+<meta property="og:url" content="http://blog.sunyh512.cn/2021/06/22/Mac%E5%AE%89%E8%A3%85Docker%E7%9A%84%E9%97%AE%E9%A2%98/index.html">
 <meta property="og:site_name" content="Ghuilrei&#39;s Blog">
-<meta property="og:description" content="JVM方法区与元空间">
+<meta property="og:description" content="Mac上安装docker报错failed to ping backend API并卡死">
 <meta property="og:locale" content="en_US">
-<meta property="og:image" content="http://img.sunyh512.cn/img/20210803174914.png">
-<meta property="article:published_time" content="2021-08-03T08:20:48.000Z">
-<meta property="article:modified_time" content="2021-08-03T09:49:52.394Z">
+<meta property="article:published_time" content="2021-06-22T07:10:50.000Z">
+<meta property="article:modified_time" content="2021-06-22T09:31:37.084Z">
 <meta property="article:author" content="Ghuilrei">
-<meta property="article:tag" content="JVM">
+<meta property="article:tag" content="Mac OS">
+<meta property="article:tag" content="Docker">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:image" content="http://img.sunyh512.cn/img/20210803174914.png">
 
 
-<link rel="canonical" href="http://blog.sunyh512.cn/2021/08/03/%E6%96%B9%E6%B3%95%E5%8C%BA%E4%B8%8E%E5%85%83%E7%A9%BA%E9%97%B4/">
+<link rel="canonical" href="http://blog.sunyh512.cn/2021/06/22/Mac%E5%AE%89%E8%A3%85Docker%E7%9A%84%E9%97%AE%E9%A2%98/">
 
 
 
-<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"en","comments":true,"permalink":"http://blog.sunyh512.cn/2021/08/03/%E6%96%B9%E6%B3%95%E5%8C%BA%E4%B8%8E%E5%85%83%E7%A9%BA%E9%97%B4/","path":"2021/08/03/方法区与元空间/","title":"JVM的方法区与元空间"}</script>
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"en","comments":true,"permalink":"http://blog.sunyh512.cn/2021/06/22/Mac%E5%AE%89%E8%A3%85Docker%E7%9A%84%E9%97%AE%E9%A2%98/","path":"2021/06/22/Mac安装Docker的问题/","title":"Mac上安装docker卡死"}</script>
 
 <script class="next-config" data-name="calendar" type="application/json">""</script>
-<title>JVM的方法区与元空间 | Ghuilrei's Blog</title>
+<title>Mac上安装docker卡死 | Ghuilrei's Blog</title>
   
 
 
@@ -110,7 +109,7 @@
 
   <aside class="sidebar">
 
-    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+    <div class="sidebar-inner sidebar-overview-active">
       <ul class="sidebar-nav">
         <li class="sidebar-nav-toc">
           Table of Contents
@@ -123,7 +122,6 @@
       <div class="sidebar-panel-container">
         <!--noindex-->
         <div class="post-toc-wrap sidebar-panel">
-            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BB%8E%E6%96%B9%E6%B3%95%E5%8C%BA-PermGen-%E5%88%B0%E5%85%83%E7%A9%BA%E9%97%B4-Metaspace"><span class="nav-number">1.</span> <span class="nav-text">从方法区(PermGen)到元空间(Metaspace)</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E8%A6%81%E7%94%A8Metaspace%E6%9B%BF%E4%BB%A3%E6%96%B9%E6%B3%95%E5%8C%BA"><span class="nav-number">2.</span> <span class="nav-text">为什么要用Metaspace替代方法区</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#JDK1-8-%E8%BF%90%E8%A1%8C%E6%97%B6%E6%95%B0%E6%8D%AE%E5%8C%BA%E5%9F%9F"><span class="nav-number">3.</span> <span class="nav-text">JDK1.8 运行时数据区域</span></a></li></ol></div>
         </div>
         <!--/noindex-->
 
@@ -131,7 +129,7 @@
           <div class="site-overview">
             <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
     <img class="site-author-image" itemprop="image" alt="Ghuilrei"
-      src="http://img.sunyh512.cn/img/20210803143027.jpeg">
+      src="https://en.gravatar.com/userimage/179584451/1f21af48d264f02e925ddbee9c3a8fed.jpeg">
   <p class="site-author-name" itemprop="name">Ghuilrei</p>
   <div class="site-description" itemprop="description"></div>
 </div>
@@ -140,18 +138,16 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">23</span>
+          <span class="site-state-item-count">20</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
       <div class="site-state-item site-state-categories">
-            <a href="/categories/">
-          
-        <span class="site-state-item-count">13</span>
-        <span class="site-state-item-name">categories</span></a>
+        <span class="site-state-item-count">14</span>
+        <span class="site-state-item-name">categories</span>
       </div>
       <div class="site-state-item site-state-tags">
-        <span class="site-state-item-count">32</span>
+        <span class="site-state-item-count">28</span>
         <span class="site-state-item-name">tags</span>
       </div>
   </nav>
@@ -190,10 +186,10 @@
   
 
   <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="en">
-    <link itemprop="mainEntityOfPage" href="http://blog.sunyh512.cn/2021/08/03/%E6%96%B9%E6%B3%95%E5%8C%BA%E4%B8%8E%E5%85%83%E7%A9%BA%E9%97%B4/">
+    <link itemprop="mainEntityOfPage" href="http://blog.sunyh512.cn/2021/06/22/Mac%E5%AE%89%E8%A3%85Docker%E7%9A%84%E9%97%AE%E9%A2%98/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="http://img.sunyh512.cn/img/20210803143027.jpeg">
+      <meta itemprop="image" content="https://en.gravatar.com/userimage/179584451/1f21af48d264f02e925ddbee9c3a8fed.jpeg">
       <meta itemprop="name" content="Ghuilrei">
       <meta itemprop="description" content="">
     </span>
@@ -203,7 +199,7 @@
     </span>
       <header class="post-header">
         <h1 class="post-title" itemprop="name headline">
-          JVM的方法区与元空间
+          Mac上安装docker卡死
         </h1>
 
         <div class="post-meta-container">
@@ -215,7 +211,7 @@
       <span class="post-meta-item-text">Posted on</span>
       
 
-      <time title="Created: 2021-08-03 16:20:48 / Modified: 17:49:52" itemprop="dateCreated datePublished" datetime="2021-08-03T16:20:48+08:00">2021-08-03</time>
+      <time title="Created: 2021-06-22 15:10:50 / Modified: 17:31:37" itemprop="dateCreated datePublished" datetime="2021-06-22T15:10:50+08:00">2021-06-22</time>
     </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
@@ -223,7 +219,7 @@
       </span>
       <span class="post-meta-item-text">In</span>
         <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-          <a href="/categories/Java%E4%BD%93%E7%B3%BB/" itemprop="url" rel="index"><span itemprop="name">Java体系</span></a>
+          <a href="/categories/%E6%97%A5%E5%B8%B8BUG/" itemprop="url" rel="index"><span itemprop="name">日常BUG</span></a>
         </span>
     </span>
 
@@ -237,20 +233,11 @@
     
     
     <div class="post-body" itemprop="articleBody">
-        <p>JVM方法区与元空间</p>
+        <p>Mac上安装docker报错<code>failed to ping backend API</code>并卡死</p>
 <span id="more"></span>
 
-<h2 id="从方法区-PermGen-到元空间-Metaspace"><a href="#从方法区-PermGen-到元空间-Metaspace" class="headerlink" title="从方法区(PermGen)到元空间(Metaspace)"></a>从方法区(PermGen)到元空间(Metaspace)</h2><p>JDK1.8以前的HotSpot JVM有方法区，也叫永久代(permanent generation)。</p>
-<p>其实永久代和方法区并不是一样的，当时HotSpot虚拟机想<em>用永久代来实现方法区</em>，使得HotSpot虚拟机能够像管理堆一样来管理这一部分内存。</p>
-<p>对于其他虚拟机来说，并没有永久代这么一说。</p>
-<p>JDK1.7的HotSpot把原本放在永久代（方法区）的字符串常量池、静态变量等移到堆当中。</p>
-<p>JDK1.8的HotSpot完全放弃了永久代的概念，使用本地内存实现元空间，把剩余的内容（类型信息）移动到元空间中。</p>
-<h2 id="为什么要用Metaspace替代方法区"><a href="#为什么要用Metaspace替代方法区" class="headerlink" title="为什么要用Metaspace替代方法区"></a>为什么要用Metaspace替代方法区</h2><p>随着动态类加载的情况越来越多，这块内存变得不太可控：</p>
-<ul>
-<li>  如果设置小了，系统运行过程中就容易出现内存溢出，</li>
-<li>  如果设置大了，浪费内存。</li>
-</ul>
-<h2 id="JDK1-8-运行时数据区域"><a href="#JDK1-8-运行时数据区域" class="headerlink" title="JDK1.8 运行时数据区域"></a>JDK1.8 运行时数据区域</h2><p><img src="http://img.sunyh512.cn/img/20210803174914.png" alt="1.8内存结构"></p>
+<p>根据<a target="_blank" rel="noopener" href="https://github.com/docker/for-mac/issues/5037">GitHub</a>上的问答，最新版在MacOS上会出现这种错误，使用低版本的Docker就解决了</p>
+<p>链接：<a target="_blank" rel="noopener" href="https://docs.docker.com/docker-for-mac/release-notes/#docker-desktop-community-2400">Docker Desktop Community 2.4.0.0</a></p>
 
     </div>
 
@@ -260,18 +247,22 @@
 
     <footer class="post-footer">
           <div class="post-tags">
-              <a href="/tags/JVM/" rel="tag"># JVM</a>
+              <a href="/tags/Mac-OS/" rel="tag"># Mac OS</a>
+              <a href="/tags/Docker/" rel="tag"># Docker</a>
           </div>
 
         
 
           <div class="post-nav">
             <div class="post-nav-item">
-                <a href="/2021/07/28/ConCurrentHashMap%E7%AD%89%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E7%9A%84%E5%8C%BA%E5%88%AB/" rel="prev" title="ConCurrentHashMap & HashMap & HashTable & SynchronizedMap">
-                  <i class="fa fa-chevron-left"></i> ConCurrentHashMap & HashMap & HashTable & SynchronizedMap
+                <a href="/2021/06/22/%E6%B0%B8%E6%81%92%E4%B9%8B%E8%93%9D%E6%B8%97%E9%80%8F%E8%BF%87%E7%A8%8B/" rel="prev" title="永恒之蓝渗透过程">
+                  <i class="fa fa-chevron-left"></i> 永恒之蓝渗透过程
                 </a>
             </div>
             <div class="post-nav-item">
+                <a href="/2021/06/22/%E5%9C%A8Windows%20Server%202003%E4%B8%8A%E9%85%8D%E7%BD%AEISS%E6%9C%8D%E5%8A%A1%E5%99%A8%20/" rel="next" title="ISS服务器配置与攻击">
+                  ISS服务器配置与攻击 <i class="fa fa-chevron-right"></i>
+                </a>
             </div>
           </div>
     </footer>
