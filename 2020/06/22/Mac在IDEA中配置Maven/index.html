@@ -20,19 +20,19 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
 
 <script class="next-config" data-name="main" type="application/json">{"hostname":"blog.sunyh512.cn","root":"/","images":"/images","scheme":"Gemini","version":"8.5.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":false,"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"Searching...","empty":"We didn't find any results for the search: ${query}","hits_time":"${hits} results found in ${time} ms","hits":"${hits} results found"}}</script><script src="/js/config.js"></script>
-<meta name="description" content="安装以及配置条件：java环境已经配置好    maven是对于java工程的管理  maven安装到Mac1、首先下载maven。 下载地址 点击进去是最新版本的maven，文章实际环境是老版本3.6.0。 点击最下面的archive超链接可以下载老版本。 2，下载后把解压的文件夹放置到你想放的路径下面，本文路径：&#x2F;Users&#x2F;ghuilrei&#x2F;maven&#x2F;apache-maven-3.6.0">
+<meta name="description" content="Mac在IDEA中配置Maven">
 <meta property="og:type" content="article">
 <meta property="og:title" content="Mac在IDEA中配置Maven">
 <meta property="og:url" content="http://blog.sunyh512.cn/2020/06/22/Mac%E5%9C%A8IDEA%E4%B8%AD%E9%85%8D%E7%BD%AEMaven/index.html">
 <meta property="og:site_name" content="Ghuilrei&#39;s Blog">
-<meta property="og:description" content="安装以及配置条件：java环境已经配置好    maven是对于java工程的管理  maven安装到Mac1、首先下载maven。 下载地址 点击进去是最新版本的maven，文章实际环境是老版本3.6.0。 点击最下面的archive超链接可以下载老版本。 2，下载后把解压的文件夹放置到你想放的路径下面，本文路径：&#x2F;Users&#x2F;ghuilrei&#x2F;maven&#x2F;apache-maven-3.6.0">
+<meta property="og:description" content="Mac在IDEA中配置Maven">
 <meta property="og:locale" content="en_US">
 <meta property="og:image" content="http://img.sunyh512.cn/img/20210225105938.png">
 <meta property="og:image" content="http://img.sunyh512.cn/img/20210225105737.png">
 <meta property="og:image" content="http://img.sunyh512.cn/img/20210225101945.png">
 <meta property="og:image" content="http://img.sunyh512.cn/img/20210225153401.png">
 <meta property="article:published_time" content="2020-06-22T05:25:35.000Z">
-<meta property="article:modified_time" content="2021-07-26T05:26:46.592Z">
+<meta property="article:modified_time" content="2021-08-05T05:13:14.747Z">
 <meta property="article:author" content="Ghuilrei">
 <meta property="article:tag" content="Mac">
 <meta property="article:tag" content="Maven">
@@ -145,20 +145,20 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">23</span>
+          <span class="site-state-item-count">38</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
       <div class="site-state-item site-state-categories">
             <a href="/categories/">
           
-        <span class="site-state-item-count">13</span>
+        <span class="site-state-item-count">16</span>
         <span class="site-state-item-name">categories</span></a>
       </div>
       <div class="site-state-item site-state-tags">
             <a href="/tags/">
           
-        <span class="site-state-item-count">32</span>
+        <span class="site-state-item-count">33</span>
         <span class="site-state-item-name">tags</span></a>
       </div>
   </nav>
@@ -228,7 +228,7 @@
           <i class="far fa-calendar-check"></i>
         </span>
         <span class="post-meta-item-text">Edited on</span>
-        <time title="Modified: 2021-07-26 13:26:46" itemprop="dateModified" datetime="2021-07-26T13:26:46+08:00">2021-07-26</time>
+        <time title="Modified: 2021-08-05 13:13:14" itemprop="dateModified" datetime="2021-08-05T13:13:14+08:00">2021-08-05</time>
       </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
@@ -250,7 +250,10 @@
     
     
     <div class="post-body" itemprop="articleBody">
-        <h2 id="安装以及配置"><a href="#安装以及配置" class="headerlink" title="安装以及配置"></a>安装以及配置</h2><p>条件：java环境已经配置好</p>
+        <p>Mac在IDEA中配置Maven</p>
+<span id="more"></span>
+
+<h2 id="安装以及配置"><a href="#安装以及配置" class="headerlink" title="安装以及配置"></a>安装以及配置</h2><p>条件：java环境已经配置好</p>
 <ul>
 <li>  maven是对于java工程的管理</li>
 </ul>
@@ -366,6 +369,12 @@
   
 
 
+
+
+  
+
+  <script class="next-config" data-name="enableMath" type="application/json">true</script><script class="next-config" data-name="mathjax" type="application/json">{"enable":true,"tags":"none","js":{"url":"https://cdn.jsdelivr.net/npm/mathjax@3.1.4/es5/tex-mml-chtml.js","integrity":"sha256-ncNI9OXOS5Ek4tzVYiOMmN/KKCPZ6V0Cpv2P/zHntiA="}}</script>
+<script src="/js/third-party/math/mathjax.js"></script>
 
 
 
