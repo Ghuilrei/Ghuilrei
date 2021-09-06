@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.3/css/all.min.css" integrity="sha256-2H3fkXt6FEmrReK448mDVGKb3WW2ZZw35gI7vqHOE4Y=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"blog.sunyh512.cn","root":"/","images":"/images","scheme":"Gemini","version":"8.5.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":false,"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"Searching...","empty":"We didn't find any results for the search: ${query}","hits_time":"${hits} results found in ${time} ms","hits":"${hits} results found"}}</script><script src="/js/config.js"></script>
+<meta name="description" content="Java 中的 BIO、NIO和 AIO 理解为是 Java 语言对操作系统的各种 IO 模型的封装。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="BIO、NIO与AIO">
+<meta property="og:url" content="http://blog.sunyh512.cn/2021/08/10/BIO%E3%80%81NIO%E4%B8%8EAIO/index.html">
+<meta property="og:site_name" content="Ghuilrei&#39;s Blog">
+<meta property="og:description" content="Java 中的 BIO、NIO和 AIO 理解为是 Java 语言对操作系统的各种 IO 模型的封装。">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="http://img.sunyh512.cn/img/20210810171300.png">
+<meta property="og:image" content="http://img.sunyh512.cn/img/20210810171309.png">
+<meta property="og:image" content="http://img.sunyh512.cn/img/20210810165328.png">
+<meta property="article:published_time" content="2021-08-10T08:24:57.000Z">
+<meta property="article:modified_time" content="2021-08-10T11:42:23.488Z">
+<meta property="article:author" content="Ghuilrei">
+<meta property="article:tag" content="Java I&#x2F;O">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://img.sunyh512.cn/img/20210810171300.png">
+
+
+<link rel="canonical" href="http://blog.sunyh512.cn/2021/08/10/BIO%E3%80%81NIO%E4%B8%8EAIO/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"en","comments":true,"permalink":"http://blog.sunyh512.cn/2021/08/10/BIO%E3%80%81NIO%E4%B8%8EAIO/","path":"2021/08/10/BIO、NIO与AIO/","title":"BIO、NIO与AIO"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>BIO、NIO与AIO | Ghuilrei's Blog</title>
+  
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <h1 class="site-title">Ghuilrei's Blog</h1>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu">
+        <li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a></li>
+        <li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a></li>
+        <li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a></li>
+        <li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a></li>
+        <li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a></li>
+        <li class="menu-item menu-item-schedule"><a href="/schedule/" rel="section"><i class="fa fa-calendar fa-fw"></i>Schedule</a></li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#BIO-Blocking-I-O"><span class="nav-number">1.</span> <span class="nav-text">BIO (Blocking I&#x2F;O)</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BC%A0%E7%BB%9F-BIO"><span class="nav-number">1.1.</span> <span class="nav-text">传统 BIO</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BC%AA%E5%BC%82%E6%AD%A5-IO"><span class="nav-number">1.2.</span> <span class="nav-text">伪异步 IO</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#BIO%E7%BC%BA%E7%82%B9"><span class="nav-number">1.3.</span> <span class="nav-text">BIO缺点</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#BIO%E5%BA%94%E7%94%A8%E5%9C%BA%E6%99%AF"><span class="nav-number">1.4.</span> <span class="nav-text">BIO应用场景</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#NIO%EF%BC%88Non-Blocking-IO%EF%BC%89"><span class="nav-number">2.</span> <span class="nav-text">NIO（Non Blocking IO）</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#NIO%E6%A0%B8%E5%BF%83%E7%BB%84%E4%BB%B6"><span class="nav-number">2.1.</span> <span class="nav-text">NIO核心组件</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#NIO%E7%9A%84%E7%89%B9%E6%80%A7"><span class="nav-number">2.2.</span> <span class="nav-text">NIO的特性</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#NIO%E8%AF%BB%E6%95%B0%E6%8D%AE%E5%92%8C%E5%86%99%E6%95%B0%E6%8D%AE%E6%96%B9%E5%BC%8F"><span class="nav-number">2.3.</span> <span class="nav-text">NIO读数据和写数据方式</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#AIO%EF%BC%88Asynchronous-I-O%EF%BC%89"><span class="nav-number">3.</span> <span class="nav-text">AIO（Asynchronous I&#x2F;O）</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%BA%94%E7%94%A8%E5%9C%BA%E6%99%AF"><span class="nav-number">3.1.</span> <span class="nav-text">应用场景</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AF%B9%E6%AF%94"><span class="nav-number">4.</span> <span class="nav-text">对比</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-overview">
+            <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Ghuilrei"
+      src="http://img.sunyh512.cn/img/20210803143027.jpeg">
+  <p class="site-author-name" itemprop="name">Ghuilrei</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">38</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">16</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">33</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+          </div>
+        </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+  <div class="back-to-top" role="button" aria-label="Back to top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://blog.sunyh512.cn/2021/08/10/BIO%E3%80%81NIO%E4%B8%8EAIO/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="http://img.sunyh512.cn/img/20210803143027.jpeg">
+      <meta itemprop="name" content="Ghuilrei">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Ghuilrei's Blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          BIO、NIO与AIO
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">Posted on</span>
+      
+
+      <time title="Created: 2021-08-10 16:24:57 / Modified: 19:42:23" itemprop="dateCreated datePublished" datetime="2021-08-10T16:24:57+08:00">2021-08-10</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">In</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/Java%E4%BD%93%E7%B3%BB/" itemprop="url" rel="index"><span itemprop="name">Java体系</span></a>
+        </span>
+          , 
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/Java%E4%BD%93%E7%B3%BB/I-O/" itemprop="url" rel="index"><span itemprop="name">I/O</span></a>
+        </span>
+    </span>
+
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <p> Java 中的 BIO、NIO和 AIO 理解为是 Java 语言对操作系统的各种 IO 模型的封装。</p>
+<span id="more"></span>
+
+<h2 id="BIO-Blocking-I-O"><a href="#BIO-Blocking-I-O" class="headerlink" title="BIO (Blocking I/O)"></a>BIO (Blocking I/O)</h2><p>同步阻塞I/O模式，数据的读取写入必须阻塞在一个线程内等待其完成。</p>
+<h3 id="传统-BIO"><a href="#传统-BIO" class="headerlink" title="传统 BIO"></a>传统 BIO</h3><p><img src="http://img.sunyh512.cn/img/20210810171300.png" alt="BIO通信（一请求一应答）模型图"></p>
+<p>采用 <strong>BIO 通信模型</strong> 的服务队，通常由一个独立的 <code>Acceptor</code> 线程负责监听客户端的连接。</p>
+<p>我们一般通过在 <code>while(true)</code> 循环中服务端会调用 <code>accept()</code> 方法等待客户端连接的方式监听请求，请求一旦接收到一个连接请求，就可以建立通信套接字在这个通信套接字上进行读写操作，此时不能再接收其他客户端连接请求，只能等待当前连接的客户端的操作执行完成，不过可以通过多线程来支持多个客户端的连接，如上图所示。</p>
+<p>如果要让 <strong>BIO 通信模型</strong> 能够同时处理多个客户端的请求，就必须使用多线程。</p>
+<p>（要原因是 <code>socket.accept()</code>、 <code>socket.read()</code>、 <code>socket.write()</code> 涉及的三个主要函数都是同步阻塞的）</p>
+<p>当一个连接在处理 I/O 的时候，系统是阻塞的，如果是单线程的必然就挂死在哪里。</p>
+<p>开启多线程，就可以让CPU去处理更多的事情。也就是说它在接收到客户端连接请求之后为每个客户端创建一个新的线程进行链路处理，处理完成之后，通过输出流返回给客户端，线程销毁。这就是典型的 <strong>一请求一应答通信模型</strong>。</p>
+<p>在Java虚拟机中，线程是宝贵的资源，主要体现在：</p>
+<ol>
+<li> 线程的创建和销毁成本很高</li>
+<li> 线程本身占用较大内存</li>
+<li> 线程的切换成本也很高</li>
+<li> 容易造成锯齿状的系统负载</li>
+</ol>
+<h3 id="伪异步-IO"><a href="#伪异步-IO" class="headerlink" title="伪异步 IO"></a>伪异步 IO</h3><p>为了解决同步阻塞I/O面临的一个链路需要一个线程处理的问题，有人引入里线程池，通过一个线程池来处理多个客户端的请求接入，形成客户端个数：线程池最大线程数的比例关系，其中客户端个数可以远远大于最大线程数。</p>
+<p>通过线程池可以灵活地调配线程资源，设置线程的最大值，防止由于海量并发接入导致线程耗尽。</p>
+<p><img src="http://img.sunyh512.cn/img/20210810171309.png" alt="伪异步IO模型图"></p>
+<p>采用线程池和任务队列可以实现一种叫做伪异步的 I/O 通信框架，当有新的客户端接入时，将客户端的 Socket 封装成一个Task（该任务实现java.lang.Runnable接口）投递到后端的线程池中进行处理，JDK 的线程池维护一个消息队列和 N 个活跃线程，对消息队列中的任务进行处理。由于线程池可以设置消息队列的大小和最大线程数，因此，它的资源占用是可控的，无论多少个客户端并发访问，都不会导致资源的耗尽和宕机。</p>
+<h3 id="BIO缺点"><a href="#BIO缺点" class="headerlink" title="BIO缺点"></a>BIO缺点</h3><ol>
+<li> <strong>IO</strong> 代码里 <code>read</code> 操作是阻塞操作，如果连接不做数据读写操作会导致线程阻塞，浪费资源。</li>
+<li> 如果线程很多，会导致服务器线程太多，压力太大。</li>
+</ol>
+<h3 id="BIO应用场景"><a href="#BIO应用场景" class="headerlink" title="BIO应用场景"></a>BIO应用场景</h3><p>BIO 方式适用于连接数目比较小且固定的架构，这种方式对服务器资源要求比较高，但程序简单理解。</p>
+<h2 id="NIO（Non-Blocking-IO）"><a href="#NIO（Non-Blocking-IO）" class="headerlink" title="NIO（Non Blocking IO）"></a>NIO（Non Blocking IO）</h2><p>在Java领域，也称为<code>New I/O</code></p>
+<p>同步非阻塞，服务器实现模式为一个线程可以处理多个请求（连接），客户端发送的连接请求都会注册到<strong>多路复用器 selector</strong>上，多路复用器轮询到连接有 IO 请求就进行处理。</p>
+<p>它支持面向缓冲的，基于通道的I/O操作方法。</p>
+<p>NIO提供了与传统BIO模型中的 <code>Socket</code> 和 <code>ServerSocket</code> 相对应的 <code>SocketChannel</code> 和 <code>ServerSocketChannel</code> 两种不同的套接字通道实现，两种通道都支持阻塞和非阻塞两种模式。</p>
+<ul>
+<li>  阻塞模式使用就像传统中的支持一样，比较简单，但是性能和可靠性都不好；</li>
+<li>  非阻塞模式正好与之相反。</li>
+</ul>
+<p>对于低负载、低并发的应用程序，可以使用同步阻塞I/O来提升开发速率和更好的维护性；</p>
+<p>对于高负载、高并发的（网络）应用，应使用 NIO 的非阻塞模式来开发。</p>
+<h3 id="NIO核心组件"><a href="#NIO核心组件" class="headerlink" title="NIO核心组件"></a>NIO核心组件</h3><p>NIO 有三大核心组件：</p>
+<ul>
+<li>  <strong>Channel</strong>（<strong>通道</strong>）</li>
+<li>  <strong>Buffer</strong>（<strong>缓冲区</strong>）</li>
+<li>  <strong>Selector</strong>（<strong>选择器</strong>）</li>
+</ul>
+<p>整个NIO体系包含的类远远不止这三个，只能说这三个是NIO体系的“核心API”。</p>
+<p><img src="http://img.sunyh512.cn/img/20210810165328.png" alt="三大核心组件结构"></p>
+<ol>
+<li> channel 类似于流，每个 channel 对应一个 buffer 缓冲区，buffer 底层就是个数组；</li>
+<li> channel 会注册到 selector 上，由 selector 根据 channel 读写事件的发生将其交由某个空闲的线程处理；</li>
+<li> selector 可以对应一个或多个线程</li>
+<li> NIO 的 Buffer 和 channel 既可以读也可以写</li>
+</ol>
+<h3 id="NIO的特性"><a href="#NIO的特性" class="headerlink" title="NIO的特性"></a>NIO的特性</h3><p>1、<u>NIO 流是非阻塞 IO，而 IO 流是阻塞 IO。</u></p>
+<p>Java NIO 使我们可以进行非阻塞 IO 操作。比如说，单线程中从通道读取数据到 buffer，同时可以继续做别的事情，当数据读取到 buffer 中后，线程再继续处理数据。写数据也是一样的。另外，非阻塞写也是日常，一个线程请求写入一些数据到某通道，但不需要等待它完全写入，这个线程同时可以去做别的事情。</p>
+<p>Java IO 的各种流是阻塞的，这意味这，当一个线程调用 read() 或 write() 时，该线程被阻塞，直到有一些数据被读取或数据完全写入。该线程在此期间不能再干任何事情了。</p>
+<p>2、NIO 的3个核心组件给 NIO 带来的改进：</p>
+<p><strong>Buffer（缓冲区）</strong></p>
+<p><u>IO 面向流（Stream oriented），NIO 面向缓冲区（Buffer oriented）</u></p>
+<p>Buffer 是一个对象，它包含一些要写入或者要读出的数据。</p>
+<p>在 NIO 类库中加入 Buffer对象，体现了新库与原库 I/O的一个重要区别：</p>
+<ul>
+<li><p>  在面向流的 I/O 中，可以直接将数据写入或者将数据直接读到 Stream 对象中。虽然 Stream 中也有 Buffer 开通的扩展类，但只是流的包装类，还从流读到缓冲区。</p>
+</li>
+<li><p>NIO 是直接读到 Buffer 中进行操作。在 NIO 库中，所有的数据都是用缓冲区处理的。</p>
+<ul>
+<li><p>  在读取数据时，它是直接读到缓冲区中的。</p>
+</li>
+<li><p>  在写入数据时，写入到缓存中。</p>
+</li>
+</ul>
+<p>  任何时候访问 NIO 中的数据，都是通过缓冲区进行操作。</p>
+</li>
+</ul>
+<blockquote>
+<p>  最常用的缓冲区是 ByteBuffer。ByteBuffer 提供流一组功能用于操作 byte 数组。</p>
+<p>  除了 ByteBuffer 还有其他的一些缓冲区，事实上，每一种 Java 基本类型（除了 Boolean 类型）都对应有一种缓冲区。</p>
+</blockquote>
+<p><strong>Channel（通道）</strong></p>
+<p><u>NIO 通过Channel（通道） 进行读写。</u></p>
+<p>通道是双向的，可读也可写，而流的读写是单向的。无论读写，通道只能和Buffer交互。因为 Buffer，通道可以异步地读写。</p>
+<p><strong>Selector（选择器）</strong></p>
+<p><u>NIO有选择器，而IO没有。</u></p>
+<p>选择器用于使用单个线程处理多个通道。因此，它需要较少的线程来处理这些通道。线程之间的切换对于操作系统来说是昂贵的。 因此，为了提高系统效率选择器是有用的。</p>
+<h3 id="NIO读数据和写数据方式"><a href="#NIO读数据和写数据方式" class="headerlink" title="NIO读数据和写数据方式"></a>NIO读数据和写数据方式</h3><p>通常来说NIO中的所有IO都是从 Channel（通道） 开始的。</p>
+<ul>
+<li>从通道进行数据读取 ：创建一个缓冲区，然后请求通道读取数据。</li>
+<li>从通道进行数据写入 ：创建一个缓冲区，并要求通道写入数据。</li>
+</ul>
+<h2 id="AIO（Asynchronous-I-O）"><a href="#AIO（Asynchronous-I-O）" class="headerlink" title="AIO（Asynchronous I/O）"></a>AIO（Asynchronous I/O）</h2><p>异步非阻塞，由操作系统完成后回调通知服务端程序启动线程去处理， 一般适用于连接数较多且连接时间较长的应用。</p>
+<p>AIO 也就是 NIO 2。在 Java 7 中引入了 NIO 的改进版 NIO 2。</p>
+<p>它是异步非阻塞的IO模型。异步 IO 是基于事件和回调机制实现的，也就是应用操作之后会直接返回，不会堵塞在那里，当后台处理完成，操作系统会通知相应的线程进行后续的操作。</p>
+<blockquote>
+<p>  AIO 是异步IO的缩写，虽然 NIO 在网络操作中，提供了非阻塞的方法，但是 NIO 的 IO 行为还是同步的。</p>
+<p>  对于 NIO 来说，我们的业务线程是在 IO 操作准备好时，得到通知，接着就由这个线程自行进行 IO 操作，IO操作本身是同步的。</p>
+<p>  （除了 AIO 其他的 IO 类型都是同步的）</p>
+</blockquote>
+<h3 id="应用场景"><a href="#应用场景" class="headerlink" title="应用场景"></a>应用场景</h3><p>AIO 方式适用于连接数目多且连接比较长（重操作）的架构。</p>
+<h2 id="对比"><a href="#对比" class="headerlink" title="对比"></a>对比</h2><table>
+<thead>
+<tr>
+<th align="left"></th>
+<th align="left">BIO</th>
+<th align="left">NIO</th>
+<th>AIO</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left">IO模型</td>
+<td align="left">同步阻塞</td>
+<td align="left">同步非阻塞（多路复用）</td>
+<td>异步非阻塞</td>
+</tr>
+<tr>
+<td align="left">编程难度</td>
+<td align="left">简单</td>
+<td align="left">复杂</td>
+<td>复杂</td>
+</tr>
+<tr>
+<td align="left">可靠性</td>
+<td align="left">差</td>
+<td align="left">好</td>
+<td>好</td>
+</tr>
+<tr>
+<td align="left">吞吐量</td>
+<td align="left">低</td>
+<td align="left">高</td>
+<td>高</td>
+</tr>
+</tbody></table>
+<hr>
+<p>本文参考自《<a target="_blank" rel="noopener" href="https://mp.weixin.qq.com/s/7DrH3vdl0xVJp97Q-fjTAA">Netty学习前基本知识 — BIO 、NIO 、AIO 总结</a>》</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Java-I-O/" rel="tag"># Java I/O</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2021/08/10/Java%E5%B9%B6%E5%8F%91%E4%B9%8B%E9%98%BB%E5%A1%9E%E9%98%9F%E5%88%97/" rel="prev" title="Java并发之阻塞队列">
+                  <i class="fa fa-chevron-left"></i> Java并发之阻塞队列
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2021/08/18/%E6%95%B0%E6%8D%AE%E5%BA%93%E4%BA%8B%E5%8A%A1%E9%9A%94%E7%A6%BB%E7%BA%A7%E5%88%AB/" rel="next" title="数据库事务隔离级别">
+                  数据库事务隔离级别 <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Ghuilrei</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/" rel="noopener" target="_blank">NexT.Gemini</a>
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <script src="https://cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/next-boot.js"></script>
+
+  
+
+
+
+
+  
+
+
+
+
+  
+
+  <script class="next-config" data-name="enableMath" type="application/json">true</script><script class="next-config" data-name="mathjax" type="application/json">{"enable":true,"tags":"none","js":{"url":"https://cdn.jsdelivr.net/npm/mathjax@3.1.4/es5/tex-mml-chtml.js","integrity":"sha256-ncNI9OXOS5Ek4tzVYiOMmN/KKCPZ6V0Cpv2P/zHntiA="}}</script>
+<script src="/js/third-party/math/mathjax.js"></script>
+
+
+
+</body>
+</html>

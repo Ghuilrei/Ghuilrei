@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.3/css/all.min.css" integrity="sha256-2H3fkXt6FEmrReK448mDVGKb3WW2ZZw35gI7vqHOE4Y=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"blog.sunyh512.cn","root":"/","images":"/images","scheme":"Gemini","version":"8.5.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":false,"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"Searching...","empty":"We didn't find any results for the search: ${query}","hits_time":"${hits} results found in ${time} ms","hits":"${hits} results found"}}</script><script src="/js/config.js"></script>
+<meta name="description" content="字节面试中…… 面试官：学过操作系统是吧。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="实现题-操作系统读者优先问题">
+<meta property="og:url" content="http://blog.sunyh512.cn/2021/09/04/%E5%AE%9E%E7%8E%B0%E9%A2%98-%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E8%AF%BB%E8%80%85%E4%BC%98%E5%85%88%E9%97%AE%E9%A2%98/index.html">
+<meta property="og:site_name" content="Ghuilrei&#39;s Blog">
+<meta property="og:description" content="字节面试中…… 面试官：学过操作系统是吧。">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2021-09-04T09:46:36.000Z">
+<meta property="article:modified_time" content="2021-09-04T12:54:24.852Z">
+<meta property="article:author" content="Ghuilrei">
+<meta property="article:tag" content="操作系统">
+<meta property="article:tag" content="Java">
+<meta property="article:tag" content="面试">
+<meta name="twitter:card" content="summary">
+
+
+<link rel="canonical" href="http://blog.sunyh512.cn/2021/09/04/%E5%AE%9E%E7%8E%B0%E9%A2%98-%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E8%AF%BB%E8%80%85%E4%BC%98%E5%85%88%E9%97%AE%E9%A2%98/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"en","comments":true,"permalink":"http://blog.sunyh512.cn/2021/09/04/%E5%AE%9E%E7%8E%B0%E9%A2%98-%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E8%AF%BB%E8%80%85%E4%BC%98%E5%85%88%E9%97%AE%E9%A2%98/","path":"2021/09/04/实现题-操作系统读者优先问题/","title":"实现题-操作系统读者优先问题"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>实现题-操作系统读者优先问题 | Ghuilrei's Blog</title>
+  
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <h1 class="site-title">Ghuilrei's Blog</h1>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu">
+        <li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a></li>
+        <li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a></li>
+        <li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a></li>
+        <li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a></li>
+        <li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a></li>
+        <li class="menu-item menu-item-schedule"><a href="/schedule/" rel="section"><i class="fa fa-calendar fa-fw"></i>Schedule</a></li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%89%8D%E6%83%85%E6%8F%90%E8%A6%81"><span class="nav-number">1.</span> <span class="nav-text">前情提要</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%80%9D%E8%B7%AF"><span class="nav-number">2.</span> <span class="nav-text">思路</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%AF%BB%E8%BF%9B%E7%A8%8B%EF%BC%88Read%EF%BC%89"><span class="nav-number">2.1.</span> <span class="nav-text">读进程（Read）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%86%99%E8%BF%9B%E7%A8%8B%EF%BC%88Write%EF%BC%89"><span class="nav-number">2.2.</span> <span class="nav-text">写进程（Write）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BF%A1%E5%8F%B7%E9%87%8F%EF%BC%88Semaphore%EF%BC%89"><span class="nav-number">2.3.</span> <span class="nav-text">信号量（Semaphore）</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#P%E6%93%8D%E4%BD%9C"><span class="nav-number">2.3.1.</span> <span class="nav-text">P操作</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#V%E6%93%8D%E4%BD%9C"><span class="nav-number">2.3.2.</span> <span class="nav-text">V操作</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%AF%BB%E8%80%85%E4%BC%98%E5%85%88"><span class="nav-number">2.4.</span> <span class="nav-text">读者优先</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%B7%B2%E7%BB%8F%E6%9C%89%E8%AF%BB%E8%BF%9B%E7%A8%8B"><span class="nav-number">2.4.1.</span> <span class="nav-text">已经有读进程</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%B7%B2%E7%BB%8F%E6%9C%89%E5%86%99%E8%BF%9B%E7%A8%8B"><span class="nav-number">2.4.2.</span> <span class="nav-text">已经有写进程</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BB%A3%E7%A0%81"><span class="nav-number">3.</span> <span class="nav-text">代码</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%B8%BB%E4%BD%93%E4%BB%A3%E7%A0%81"><span class="nav-number">3.1.</span> <span class="nav-text">主体代码</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BF%A1%E5%8F%B7%E9%87%8F%EF%BC%88Semaphore%EF%BC%89-1"><span class="nav-number">3.2.</span> <span class="nav-text">信号量（Semaphore）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%89%A7%E8%A1%8C%E7%BB%93%E6%9E%9C"><span class="nav-number">3.3.</span> <span class="nav-text">执行结果</span></a></li></ol></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-overview">
+            <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Ghuilrei"
+      src="http://img.sunyh512.cn/img/20210803143027.jpeg">
+  <p class="site-author-name" itemprop="name">Ghuilrei</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">42</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">16</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">31</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+          </div>
+        </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+  <div class="back-to-top" role="button" aria-label="Back to top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://blog.sunyh512.cn/2021/09/04/%E5%AE%9E%E7%8E%B0%E9%A2%98-%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E8%AF%BB%E8%80%85%E4%BC%98%E5%85%88%E9%97%AE%E9%A2%98/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="http://img.sunyh512.cn/img/20210803143027.jpeg">
+      <meta itemprop="name" content="Ghuilrei">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Ghuilrei's Blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          实现题-操作系统读者优先问题
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">Posted on</span>
+      
+
+      <time title="Created: 2021-09-04 17:46:36 / Modified: 20:54:24" itemprop="dateCreated datePublished" datetime="2021-09-04T17:46:36+08:00">2021-09-04</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">In</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E6%A8%A1%E6%8B%9F%E9%A2%98/" itemprop="url" rel="index"><span itemprop="name">模拟题</span></a>
+        </span>
+    </span>
+
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <p>字节面试中……</p>
+<p>面试官：学过操作系统是吧。</p>
+<span id="more"></span>
+
+<p>我：学过</p>
+<p>（准备款款而谈操作系统）</p>
+<p>面试官：那写一道题吧！</p>
+<p>我：啊？</p>
+<p>然后只见面试官在牛客上敲出一行文字：</p>
+<blockquote>
+<p>读者写者，读者优先</p>
+</blockquote>
+<p>我：（我在谁？我是哪？）</p>
+<h2 id="前情提要"><a href="#前情提要" class="headerlink" title="前情提要"></a>前情提要</h2><p>先复习一下操作系统的东西：</p>
+<blockquote>
+<p><strong>临界资源</strong>：</p>
+<p>同一时间只能由一个进程访问的资源</p>
+</blockquote>
+<blockquote>
+<p><strong>临界区</strong>：</p>
+<p>访问临界资源的代码段</p>
+</blockquote>
+<blockquote>
+<p><strong>读者写者问题</strong>：</p>
+<p>存在一个多个进程共享的数据区（临界资源），该数据区可以是一个文件或者一块内存空间，甚至可以是一组寄存器；</p>
+<p>有些进程reader只读取这个数据区的数据，有些进程writer只往数据区中写数据。</p>
+<p>此外，还需要满足以下条件：</p>
+<ol>
+<li><p>任意数量的读进程可以同时读这个文件。</p>
+</li>
+<li><p>一次只能有一个写进程可以写这个文件。</p>
+</li>
+<li><p>若一个写进程正在写文件，则禁止任何读进程读文件。</p>
+<p>换一种说法：若一个读进程正在读文件，则禁止任何写进程写文件。</p>
+</li>
+</ol>
+</blockquote>
+<blockquote>
+<p><strong>读者优先</strong>：</p>
+<p>必须等所有读进程读完才可以写。</p>
+<p>举个形象一点的🌰：</p>
+<p>这就好比前几天学校里排队（被阻塞）做核酸检测（访问临界资源），你（被阻塞的写进程）前面有一个人（被阻塞的读进程），暂且叫它小渣，他把他的室友、对象、对象的室友、室友的对象（其他读进程）都叫到他这里来，他们（所有读进程）都在你前面做核酸检测，只有他们都做完了，你才能做核酸检测。</p>
+</blockquote>
+<p>总结一下：读进程不排斥其它读进程，而写进程排斥其它所有进程，包括读进程和写进程。</p>
+<h2 id="思路"><a href="#思路" class="headerlink" title="思路"></a>思路</h2><p>使用Java子线程模拟读写进程，通过模拟操作系统的PV操作，来实现读写进程的管理。</p>
+<h3 id="读进程（Read）"><a href="#读进程（Read）" class="headerlink" title="读进程（Read）"></a>读进程（Read）</h3><ol>
+<li><p>先执行读互斥量的<code>P()</code>操作</p>
+<p>1、防止同时有其他的读进程在进行第2步的判断</p>
+<p>2、其他读进程进行第2步判断时置当前进程为等待状态</p>
+</li>
+<li><p>判断是否有读进程在使用临界资源</p>
+<ul>
+<li><p>如果没有：执行写互斥量的<code>P()</code>操作</p>
+<p>1、防止有写进程进入</p>
+<p>2、有写进程置当前进程为等待状态</p>
+</li>
+<li><p>如果有：继续执行</p>
+</li>
+</ul>
+</li>
+<li><p>读进程计数器+1</p>
+</li>
+<li><p>执行读互斥量的<code>V()</code>操作</p>
+<p>解锁读进程，唤醒其他阻塞在读互斥量的进程</p>
+</li>
+<li><p>读取临界资源</p>
+</li>
+<li><p>执行读互斥量的<code>P()</code>操作，防止同时有其他的读进程在进行第7步的判断</p>
+</li>
+<li><p>判断是否还有读进程在使用临界资源</p>
+<ul>
+<li>如果没有：执行写互斥量的<code>V()</code>操作，允许写进程进入</li>
+<li>如果有：继续执行</li>
+</ul>
+</li>
+<li><p>执行读互斥量的<code>V()</code>操作</p>
+<p>解锁读进程，唤醒其他阻塞在读互斥量的进程</p>
+</li>
+<li><p>结束。</p>
+</li>
+</ol>
+<h3 id="写进程（Write）"><a href="#写进程（Write）" class="headerlink" title="写进程（Write）"></a>写进程（Write）</h3><ol>
+<li><p>执行写互斥量的<code>P()</code>操作</p>
+<p>1、防止同时有其他的写进程在写临界区资源</p>
+<p>2、其他写进程执行时置当前进程为等待状态</p>
+</li>
+<li><p>写入临界资源</p>
+</li>
+<li><p>执行写互斥量的<code>V()</code>操作</p>
+<p>解锁读进程，唤醒其他阻塞在写互斥量的进程</p>
+</li>
+</ol>
+<h3 id="信号量（Semaphore）"><a href="#信号量（Semaphore）" class="headerlink" title="信号量（Semaphore）"></a>信号量（Semaphore）</h3><p>初始化时，需要先定义信号量的大小，如果是分配如输入输出这类数量不唯一的资源，信号量大小就是临界资源的数量。</p>
+<p><em>本题中临界资源只有一个变量，所以初始大小为1。</em></p>
+<p>因为<code>P()</code>和<code>V()</code>操作都需要原子性，所以在<code>P()</code>和<code>V()</code>方法上添加<code>synchronized</code>关键字，以保证<code>P()</code>和<code>V()</code>原子性执行。</p>
+<h4 id="P操作"><a href="#P操作" class="headerlink" title="P操作"></a>P操作</h4><ol>
+<li>信号量减1</li>
+<li>判断信号量是否小于0<ul>
+<li>小于0：阻塞当前线程</li>
+<li>大于等于0：不用管了</li>
+</ul>
+</li>
+</ol>
+<h4 id="V操作"><a href="#V操作" class="headerlink" title="V操作"></a>V操作</h4><ol>
+<li>信号量加1</li>
+<li>判断信号量是否小于等于0<ul>
+<li>小于等于0：唤醒下一线程</li>
+<li>大于0：不用管了</li>
+</ul>
+</li>
+</ol>
+<h3 id="读者优先"><a href="#读者优先" class="headerlink" title="读者优先"></a>读者优先</h3><p>我们分两种情况讨论：</p>
+<ul>
+<li>已经有读进程在读临界区资源</li>
+<li>已经有写进程在写临界区资源</li>
+</ul>
+<h4 id="已经有读进程"><a href="#已经有读进程" class="headerlink" title="已经有读进程"></a>已经有读进程</h4><p>当前读进程在一开始检测的时候会检测等待或锁住其他读进程。</p>
+<p>&nbsp;&nbsp;&nbsp;&nbsp;因为只有读进程中有读互斥量的<code>P()</code>操作，所以读互斥量只会锁住读进程；</p>
+<p>&nbsp;&nbsp;&nbsp;&nbsp;又因为读写进程都有写互斥量的<code>P()</code>操作，所以写互斥量不仅可能会锁住写进程还有可能会阻塞读进程。</p>
+<p>然后先判断是由已经有读进程了：如果没有，则锁住写互斥量，即<strong>阻塞后来的写进程</strong>；如果有则继续执行。</p>
+<p>然后解锁读进程，即<strong>允许后来的读进程访问临界资源</strong>。</p>
+<p>然后执行读操作。</p>
+<blockquote>
+<p>综上：读进程在进行读操作时不会被读进其他程阻塞，但是会阻塞写进程。</p>
+<p>条件1✅（任意数量的读进程可以同时读这个文件）</p>
+<p>条件3✅（若一个读进程正在读文件，则禁止任何写进程写文件）</p>
+</blockquote>
+<p>等读操作执行完毕后，当前读进程会检测等待或锁住其他读进程，读进程计数器减1。</p>
+<p>然后判断是否还有其他读进程：如果有，继续执行，即<strong>保持阻塞后来的写进程的状态</strong>；如果没有则解锁写进程。</p>
+<blockquote>
+<p>综上：如果还有读进程，则保持对写进程的阻塞</p>
+<p>读者优先✅（必须等所有读进程读完才可以写）</p>
+<p>条件2是写进程自己实现的，所以此处就当它是满足的✅。</p>
+</blockquote>
+<h4 id="已经有写进程"><a href="#已经有写进程" class="headerlink" title="已经有写进程"></a>已经有写进程</h4><p>先等待写进程结束。</p>
+<p>然后 <a href="#%E5%B7%B2%E7%BB%8F%E6%9C%89%E8%AF%BB%E8%BF%9B%E7%A8%8B">查看后续步骤请点击</a></p>
+<p>比较巧妙的一点是：如果写进程后面有多个读进程被阻塞的话，只有第一个读进程是阻塞在写互斥量上的，其他的读进程都是被阻塞在读互斥量上。</p>
+<p>这样就可以保证在读线程访问临界资源的时候，无论其他读线程什么时候来，都能在被阻塞的写线程之前访问临界资源。</p>
+<p>因为写互斥量的<code>P()</code>操作时在读互斥量的<code>P()</code>和<code>V()</code>操作之间，如果第一个读进程被写互斥量的<code>P()</code>操作阻塞，读互斥量的<code>V()</code>操作还未执行，所以后来的读进程在执行读互斥量的<code>P()</code>操作时就会被读互斥量阻塞。</p>
+<blockquote>
+<p>就相当于小渣（承接上文）自成了一队，必须他那一队都做完核酸检测，你才可以做。</p>
+<p>更过分的是，他的那个队伍后面随时还有可能排上其他人。</p>
+<p>（本”写线程“已经开始生气了🤬）</p>
+</blockquote>
+<h2 id="代码"><a href="#代码" class="headerlink" title="代码"></a>代码</h2><h3 id="主体代码"><a href="#主体代码" class="headerlink" title="主体代码"></a>主体代码</h3><p>读线程和写线程用的静态内部类实现的。</p>
+<p>（虽然记不太清静态内部类有啥特性了，回头得复习一下，万一面试问了呢）</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br><span class="line">153</span><br><span class="line">154</span><br><span class="line">155</span><br><span class="line">156</span><br><span class="line">157</span><br><span class="line">158</span><br><span class="line">159</span><br><span class="line">160</span><br><span class="line">161</span><br><span class="line">162</span><br><span class="line">163</span><br><span class="line">164</span><br><span class="line">165</span><br><span class="line">166</span><br><span class="line">167</span><br><span class="line">168</span><br><span class="line">169</span><br><span class="line">170</span><br><span class="line">171</span><br><span class="line">172</span><br><span class="line">173</span><br><span class="line">174</span><br><span class="line">175</span><br><span class="line">176</span><br><span class="line">177</span><br><span class="line">178</span><br><span class="line">179</span><br><span class="line">180</span><br><span class="line">181</span><br><span class="line">182</span><br><span class="line">183</span><br><span class="line">184</span><br><span class="line">185</span><br><span class="line">186</span><br><span class="line">187</span><br><span class="line">188</span><br><span class="line">189</span><br><span class="line">190</span><br><span class="line">191</span><br><span class="line">192</span><br><span class="line">193</span><br><span class="line">194</span><br><span class="line">195</span><br><span class="line">196</span><br><span class="line">197</span><br><span class="line">198</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * 字节面试题：读者写者，读者优先</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@author</span> Ghuilrei</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@since</span> JDK 1.8</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">OperatingSystemReadersIsPrefer</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/** 模拟的临界资源 */</span></span><br><span class="line">    <span class="keyword">static</span> String source = <span class="string">&quot;Hello! World.&quot;</span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/** 读信号量 */</span></span><br><span class="line">    <span class="keyword">static</span> <span class="keyword">final</span> Semaphore rMutex = <span class="keyword">new</span> Semaphore(<span class="number">1</span>, <span class="string">&quot;Read互斥量&quot;</span>);</span><br><span class="line"></span><br><span class="line">    <span class="comment">/** 写信号量 */</span></span><br><span class="line">    <span class="keyword">static</span> <span class="keyword">final</span> Semaphore wMutex = <span class="keyword">new</span> Semaphore(<span class="number">1</span>, <span class="string">&quot;Write互斥量&quot;</span>);</span><br><span class="line"></span><br><span class="line">    <span class="comment">/** </span></span><br><span class="line"><span class="comment">     * 读进程</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="keyword">static</span> <span class="class"><span class="keyword">class</span> <span class="title">Read</span> <span class="keyword">implements</span> <span class="title">Runnable</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">        <span class="comment">/** Read进程总数 */</span></span><br><span class="line">        <span class="keyword">static</span> <span class="keyword">int</span> readCount = <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line">        <span class="comment">/** 进程名 */</span></span><br><span class="line">        <span class="keyword">private</span> <span class="keyword">final</span> String name;</span><br><span class="line"></span><br><span class="line">        Read(String name) &#123;</span><br><span class="line">            <span class="keyword">this</span>.name = name;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="meta">@Override</span></span><br><span class="line">        <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">run</span><span class="params">()</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">            System.out.println(<span class="string">&quot;Read进程（&quot;</span> + <span class="keyword">this</span>.name + <span class="string">&quot;）准备进行读操作&quot;</span>);</span><br><span class="line"></span><br><span class="line">            <span class="comment">// 读互斥量的P操作</span></span><br><span class="line">            rMutex.p(<span class="string">&quot;Read进程&quot;</span>);</span><br><span class="line"></span><br><span class="line">            <span class="keyword">if</span> (readCount == <span class="number">0</span>) &#123;</span><br><span class="line">                <span class="comment">// 如果没有读进程，则进行写互斥量的P操作</span></span><br><span class="line">                wMutex.p(<span class="string">&quot;Read进程&quot;</span>);</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            <span class="comment">// Read进程计数器+1</span></span><br><span class="line">            readCount++;</span><br><span class="line"></span><br><span class="line">            <span class="comment">// 读互斥量的V操作</span></span><br><span class="line">            rMutex.v(<span class="string">&quot;Read进程&quot;</span>);</span><br><span class="line"></span><br><span class="line">            System.out.println(<span class="string">&quot;Read进程（&quot;</span> + <span class="keyword">this</span>.name + <span class="string">&quot;）开始读操作&quot;</span>);</span><br><span class="line"></span><br><span class="line">            <span class="comment">// 模拟读数据</span></span><br><span class="line">            <span class="keyword">try</span> &#123;</span><br><span class="line">                Thread.sleep(<span class="number">900</span>);</span><br><span class="line">                System.out.println(<span class="string">&quot;Read进程（&quot;</span> + <span class="keyword">this</span>.name + <span class="string">&quot;）读取到的值：&#123;&quot;</span> + source + <span class="string">&quot;&#125;&quot;</span>);</span><br><span class="line">                Thread.sleep(<span class="number">100</span>);</span><br><span class="line">            &#125; <span class="keyword">catch</span> (InterruptedException e) &#123;</span><br><span class="line">                e.printStackTrace();</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            System.out.println(<span class="string">&quot;Read进程（&quot;</span> + <span class="keyword">this</span>.name + <span class="string">&quot;）读操作结束&quot;</span>);</span><br><span class="line"></span><br><span class="line">            <span class="comment">// 读互斥量的P操作</span></span><br><span class="line">            rMutex.p(<span class="string">&quot;Read进程&quot;</span>);</span><br><span class="line"></span><br><span class="line">            <span class="comment">// Read进程计数器-1</span></span><br><span class="line">            readCount--;</span><br><span class="line"></span><br><span class="line">            <span class="comment">// 如果没有读的进程了，就进行写互斥量的V操作（给写操作解锁）</span></span><br><span class="line">            <span class="keyword">if</span> (readCount == <span class="number">0</span>) &#123;</span><br><span class="line">                wMutex.v(<span class="string">&quot;Read进程&quot;</span>);</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            <span class="comment">// 读互斥量的V操作</span></span><br><span class="line">            rMutex.v(<span class="string">&quot;Read进程&quot;</span>);</span><br><span class="line"></span><br><span class="line">            System.out.println(<span class="string">&quot;Read进程（&quot;</span> + <span class="keyword">this</span>.name + <span class="string">&quot;）结束&quot;</span>);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * 写进程</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="keyword">static</span> <span class="class"><span class="keyword">class</span> <span class="title">Write</span> <span class="keyword">implements</span> <span class="title">Runnable</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">        <span class="comment">/** 进程名 */</span></span><br><span class="line">        <span class="keyword">private</span> <span class="keyword">final</span> String name;</span><br><span class="line"></span><br><span class="line">        <span class="comment">/** 进程名 */</span></span><br><span class="line">        <span class="keyword">private</span> <span class="keyword">final</span> String value;</span><br><span class="line"></span><br><span class="line">        Write(String name, String value) &#123;</span><br><span class="line">            <span class="keyword">this</span>.name = name;</span><br><span class="line">            <span class="keyword">this</span>.value = value;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="meta">@Override</span></span><br><span class="line">        <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">run</span><span class="params">()</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">            System.out.println(<span class="string">&quot;Write进程（&quot;</span> + <span class="keyword">this</span>.name + <span class="string">&quot;）准备开始写操作&quot;</span>);</span><br><span class="line"></span><br><span class="line">            <span class="comment">// 写互斥量的P操作</span></span><br><span class="line">            wMutex.p(<span class="string">&quot;Write进程&quot;</span>);</span><br><span class="line"></span><br><span class="line">            System.out.println(<span class="string">&quot;Write进程（&quot;</span> + <span class="keyword">this</span>.name + <span class="string">&quot;）开始将资源写为:&#123;&quot;</span> + <span class="keyword">this</span>.value + <span class="string">&quot;&#125;&quot;</span>);</span><br><span class="line"></span><br><span class="line">            <span class="comment">// 模拟写操作</span></span><br><span class="line">            <span class="keyword">try</span> &#123;</span><br><span class="line">                Thread.sleep(<span class="number">900</span>);</span><br><span class="line">                source = <span class="keyword">this</span>.value;</span><br><span class="line">                System.out.println(<span class="string">&quot;Write进程（&quot;</span> + <span class="keyword">this</span>.name + <span class="string">&quot;）已经将资源写为:&#123;&quot;</span> + source + <span class="string">&quot;&#125;&quot;</span>);</span><br><span class="line">                Thread.sleep(<span class="number">100</span>);</span><br><span class="line">            &#125; <span class="keyword">catch</span> (InterruptedException e) &#123;</span><br><span class="line">                e.printStackTrace();</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            System.out.println(<span class="string">&quot;Write进程（&quot;</span> + <span class="keyword">this</span>.name + <span class="string">&quot;）写操作结束&quot;</span>);</span><br><span class="line"></span><br><span class="line">            <span class="comment">// 写互斥量的V操作</span></span><br><span class="line">            wMutex.v(<span class="string">&quot;Write进程&quot;</span>);</span><br><span class="line"></span><br><span class="line">            System.out.println(<span class="string">&quot;Write进程（&quot;</span> + <span class="keyword">this</span>.name + <span class="string">&quot;）结束&quot;</span>);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">        System.out.println(<span class="string">&quot;情况1：两个Read进程同时读。&quot;</span>);</span><br><span class="line">        Thread thread1 = <span class="keyword">new</span> Thread(<span class="keyword">new</span> Read(<span class="string">&quot;1&quot;</span>));</span><br><span class="line">        Thread thread2 = <span class="keyword">new</span> Thread(<span class="keyword">new</span> Read(<span class="string">&quot;2&quot;</span>));</span><br><span class="line">        thread1.start();</span><br><span class="line">        thread2.start();</span><br><span class="line">        <span class="keyword">try</span> &#123;</span><br><span class="line">            thread1.join();</span><br><span class="line">            thread2.join();</span><br><span class="line">        &#125; <span class="keyword">catch</span> (InterruptedException e) &#123;</span><br><span class="line">            e.printStackTrace();</span><br><span class="line">        &#125;</span><br><span class="line">        System.out.println(<span class="string">&quot;\n-------------------------------------&quot;</span>);</span><br><span class="line"></span><br><span class="line">        System.out.println(<span class="string">&quot;情况2：Write进程执行过程中，Read进程无法读。&quot;</span>);</span><br><span class="line">        Thread thread3 = <span class="keyword">new</span> Thread(<span class="keyword">new</span> Write(<span class="string">&quot;3&quot;</span>, <span class="string">&quot;Hello! Java.&quot;</span>));</span><br><span class="line">        Thread thread4 = <span class="keyword">new</span> Thread(<span class="keyword">new</span> Read(<span class="string">&quot;4&quot;</span>));</span><br><span class="line">        thread3.start();</span><br><span class="line">        thread4.start();</span><br><span class="line">        <span class="keyword">try</span> &#123;</span><br><span class="line">            thread3.join();</span><br><span class="line">            thread4.join();</span><br><span class="line">        &#125; <span class="keyword">catch</span> (InterruptedException e) &#123;</span><br><span class="line">            e.printStackTrace();</span><br><span class="line">        &#125;</span><br><span class="line">        System.out.println(<span class="string">&quot;\n-------------------------------------&quot;</span>);</span><br><span class="line"></span><br><span class="line">        System.out.println(<span class="string">&quot;情况3：有Read进程时，Write进程无法写，但其他Read进程可以读。&quot;</span>);</span><br><span class="line">        Thread thread5 = <span class="keyword">new</span> Thread(<span class="keyword">new</span> Read(<span class="string">&quot;5&quot;</span>));</span><br><span class="line">        Thread thread6 = <span class="keyword">new</span> Thread(<span class="keyword">new</span> Write(<span class="string">&quot;6&quot;</span>, <span class="string">&quot;Hello! Multi Thread.&quot;</span>));</span><br><span class="line">        Thread thread7 = <span class="keyword">new</span> Thread(<span class="keyword">new</span> Read(<span class="string">&quot;7&quot;</span>));</span><br><span class="line">        Thread thread8 = <span class="keyword">new</span> Thread(<span class="keyword">new</span> Read(<span class="string">&quot;8&quot;</span>));</span><br><span class="line">        thread5.start();</span><br><span class="line">        thread6.start();</span><br><span class="line">        thread7.start();</span><br><span class="line">        thread8.start();</span><br><span class="line">        <span class="keyword">try</span> &#123;</span><br><span class="line">            thread5.join();</span><br><span class="line">            thread6.join();</span><br><span class="line">            thread7.join();</span><br><span class="line">            thread8.join();</span><br><span class="line">        &#125; <span class="keyword">catch</span> (InterruptedException e) &#123;</span><br><span class="line">            e.printStackTrace();</span><br><span class="line">        &#125;</span><br><span class="line">        System.out.println(<span class="string">&quot;\n-------------------------------------&quot;</span>);</span><br><span class="line"></span><br><span class="line">        System.out.println(<span class="string">&quot;情况4：Write进程写的时候，Read进程和Write进程都被阻塞&quot;</span>);</span><br><span class="line">        Thread thread9 = <span class="keyword">new</span> Thread(<span class="keyword">new</span> Write(<span class="string">&quot;9&quot;</span>, <span class="string">&quot;I want to join Byte Dance!&quot;</span>));</span><br><span class="line">        Thread thread10 = <span class="keyword">new</span> Thread(<span class="keyword">new</span> Read(<span class="string">&quot;10&quot;</span>));</span><br><span class="line">        Thread thread11 = <span class="keyword">new</span> Thread(<span class="keyword">new</span> Write(<span class="string">&quot;11&quot;</span>, <span class="string">&quot;But the interview didn&#x27;t pass.&quot;</span>));</span><br><span class="line">        Thread thread12 = <span class="keyword">new</span> Thread(<span class="keyword">new</span> Read(<span class="string">&quot;12&quot;</span>));</span><br><span class="line">        Thread thread13 = <span class="keyword">new</span> Thread(<span class="keyword">new</span> Write(<span class="string">&quot;13&quot;</span>, <span class="string">&quot;I&#x27;m so sad.&quot;</span>));</span><br><span class="line">        thread9.start();</span><br><span class="line">        thread10.start();</span><br><span class="line">        thread11.start();</span><br><span class="line">        thread12.start();</span><br><span class="line">        thread13.start();</span><br><span class="line">        <span class="keyword">try</span> &#123;</span><br><span class="line">            thread9.join();</span><br><span class="line">            thread10.join();</span><br><span class="line">            thread11.join();</span><br><span class="line">            thread12.join();</span><br><span class="line">            thread13.join();</span><br><span class="line">        &#125; <span class="keyword">catch</span> (InterruptedException e) &#123;</span><br><span class="line">            e.printStackTrace();</span><br><span class="line">        &#125;</span><br><span class="line">        System.out.println(<span class="string">&quot;\n-------------------------------------&quot;</span>);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="信号量（Semaphore）-1"><a href="#信号量（Semaphore）-1" class="headerlink" title="信号量（Semaphore）"></a>信号量（Semaphore）</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * 信号量类</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Semaphore</span> </span>&#123;</span><br><span class="line">    <span class="comment">/** 信号量 */</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">int</span> semValue;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/** 信号量名称 */</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">final</span> String name;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * 定义信号量</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="title">Semaphore</span><span class="params">(<span class="keyword">int</span> semValue, String name)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">this</span>.semValue = semValue;</span><br><span class="line">        <span class="keyword">this</span>.name = name;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * P操作</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">synchronized</span> <span class="keyword">void</span> <span class="title">p</span><span class="params">(String threadName)</span> </span>&#123;</span><br><span class="line">        semValue--;</span><br><span class="line">        <span class="keyword">if</span> (semValue &lt; <span class="number">0</span>) &#123;</span><br><span class="line">            System.out.println(<span class="string">&quot;===== 有 &quot;</span> + threadName + <span class="string">&quot; 被 &quot;</span> + name + <span class="string">&quot; 阻塞 =====&quot;</span>);</span><br><span class="line">            <span class="comment">// 阻塞该进程</span></span><br><span class="line">            <span class="keyword">try</span> &#123;</span><br><span class="line">                <span class="keyword">this</span>.wait();</span><br><span class="line">            &#125; <span class="keyword">catch</span> (InterruptedException e) &#123;</span><br><span class="line">                e.printStackTrace();</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * V操作</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">synchronized</span> <span class="keyword">void</span> <span class="title">v</span><span class="params">(String threadName)</span> </span>&#123;</span><br><span class="line">        semValue++;</span><br><span class="line">        <span class="comment">// 唤醒被阻塞的进程</span></span><br><span class="line">        <span class="keyword">if</span> (semValue &lt;= <span class="number">0</span>) &#123;</span><br><span class="line">            System.out.println(<span class="string">&quot;===== 有 &quot;</span> + threadName + <span class="string">&quot; 唤醒 &quot;</span> + name + <span class="string">&quot; 上的下一个进程 =====&quot;</span>);</span><br><span class="line">            <span class="keyword">this</span>.notify();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="执行结果"><a href="#执行结果" class="headerlink" title="执行结果"></a>执行结果</h3><blockquote>
+<p>情况1：两个Read进程同时读。<br>Read进程（1）准备进行读操作<br>Read进程（2）准备进行读操作<br>Read进程（2）开始读操作<br>Read进程（1）开始读操作<br>Read进程（1）读取到的值：{Hello! World.}<br>Read进程（2）读取到的值：{Hello! World.}<br>Read进程（2）读操作结束<br>Read进程（1）读操作结束<br>Read进程（1）结束<br>Read进程（2）结束<br>----------------------------------------<br>情况2：Write进程执行过程中，Read进程无法读。<br>Write进程（3）准备开始写操作<br>Read进程（4）准备进行读操作<br>===== 有 Read进程 被 Write互斥量 阻塞 =====<br>Write进程（3）开始将资源写为:{Hello! Java.}<br>Write进程（3）已经将资源写为:{Hello! Java.}<br>Write进程（3）写操作结束<br>===== 有 Write进程 唤醒 Write互斥量 上的下一个进程 =====<br>Write进程（3）结束<br>Read进程（4）开始读操作<br>Read进程（4）读取到的值：{Hello! Java.}<br>Read进程（4）读操作结束<br>Read进程（4）结束<br>----------------------------------------<br>情况3：有Read进程时，Write进程无法写，但其他Read进程可以读。<br>Read进程（5）准备进行读操作<br>Read进程（5）开始读操作<br>Write进程（6）准备开始写操作<br>===== 有 Write进程 被 Write互斥量 阻塞 =====<br>Read进程（8）准备进行读操作<br>Read进程（7）准备进行读操作<br>Read进程（7）开始读操作<br>Read进程（8）开始读操作<br>Read进程（5）读取到的值：{Hello! Java.}<br>Read进程（8）读取到的值：{Hello! Java.}<br>Read进程（7）读取到的值：{Hello! Java.}<br>Read进程（5）读操作结束<br>Read进程（5）结束<br>Read进程（8）读操作结束<br>Read进程（7）读操作结束<br>Read进程（8）结束<br>===== 有 Read进程 唤醒 Write互斥量 上的下一个进程 =====<br>Read进程（7）结束<br>Write进程（6）开始将资源写为:{Hello! Multi Thread.}<br>Write进程（6）已经将资源写为:{Hello! Multi Thread.}<br>Write进程（6）写操作结束<br>Write进程（6）结束<br>----------------------------------------<br>情况4：Write进程写的时候，Read进程和Write进程都被阻塞<br>Write进程（9）准备开始写操作<br>Write进程（9）开始将资源写为:{I want to join in Byte Dance!}<br>Write进程（10）准备开始写操作<br>===== 有 Write进程 被 Write互斥量 阻塞 =====<br>Read进程（11）准备进行读操作<br>===== 有 Read进程 被 Write互斥量 阻塞 =====<br>Read进程（12）准备进行读操作<br>===== 有 Read进程 被 Read互斥量 阻塞 =====<br>Write进程（13）准备开始写操作<br>===== 有 Write进程 被 Write互斥量 阻塞 =====<br>Write进程（9）已经将资源写为:{I want to join Byte Dance!}<br>Write进程（9）写操作结束<br>===== 有 Write进程 唤醒 Write互斥量 上的下一个进程 =====<br>Write进程（9）结束<br>Write进程（10）开始将资源写为:{But the interview didn’t pass.}<br>Write进程（10）已经将资源写为:{But the interview didn’t pass.}<br>Write进程（10）写操作结束<br>===== 有 Write进程 唤醒 Write互斥量 上的下一个进程 =====<br>Write进程（10）结束<br>===== 有 Read进程 唤醒 Read互斥量 上的下一个进程 =====<br>Read进程（11）开始读操作<br>Read进程（12）开始读操作<br>Read进程（11）读取到的值：{But the interview didn’t pass.}<br>Read进程（12）读取到的值：{But the interview didn’t pass.}<br>Read进程（12）读操作结束<br>Read进程（12）结束<br>Read进程（11）读操作结束<br>===== 有 Read进程 唤醒 Write互斥量 上的下一个进程 =====<br>Read进程（11）结束<br>Write进程（13）开始将资源写为:{I’m so sad.}<br>Write进程（13）已经将资源写为:{I’m so sad.}<br>Write进程（13）写操作结束<br>Write进程（13）结束</p>
+</blockquote>
+<hr>
+<p><strong>参考文章：</strong></p>
+<p>【1】：<a target="_blank" rel="noopener" href="https://blog.csdn.net/weixin_43686867/article/details/107627989">https://blog.csdn.net/weixin_43686867/article/details/107627989</a>  《Java实现读者写者问题–读者优先》</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/" rel="tag"># 操作系统</a>
+              <a href="/tags/Java/" rel="tag"># Java</a>
+              <a href="/tags/%E9%9D%A2%E8%AF%95/" rel="tag"># 面试</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2021/08/31/%E6%95%B0%E6%8D%AE%E5%BA%93%E4%B9%8B%E5%88%86%E5%BA%93%E5%88%86%E8%A1%A8/" rel="prev" title="数据库之分库分表">
+                  <i class="fa fa-chevron-left"></i> 数据库之分库分表
+                </a>
+            </div>
+            <div class="post-nav-item">
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Ghuilrei</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/" rel="noopener" target="_blank">NexT.Gemini</a>
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <script src="https://cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/next-boot.js"></script>
+
+  
+
+
+
+
+  
+
+
+
+
+  
+
+  <script class="next-config" data-name="enableMath" type="application/json">true</script><script class="next-config" data-name="mathjax" type="application/json">{"enable":true,"tags":"none","js":{"url":"https://cdn.jsdelivr.net/npm/mathjax@3.1.4/es5/tex-mml-chtml.js","integrity":"sha256-ncNI9OXOS5Ek4tzVYiOMmN/KKCPZ6V0Cpv2P/zHntiA="}}</script>
+<script src="/js/third-party/math/mathjax.js"></script>
+
+
+
+</body>
+</html>

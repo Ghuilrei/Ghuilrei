@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.3/css/all.min.css" integrity="sha256-2H3fkXt6FEmrReK448mDVGKb3WW2ZZw35gI7vqHOE4Y=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"blog.sunyh512.cn","root":"/","images":"/images","scheme":"Gemini","version":"8.5.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":false,"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"Searching...","empty":"We didn't find any results for the search: ${query}","hits_time":"${hits} results found in ${time} ms","hits":"${hits} results found"}}</script><script src="/js/config.js"></script>
+<meta name="description" content="很多时候我们需要持久化数据也就是将内存中的数据写入到硬盘里面，大部分原因是为了之后重用数据（比如重启机器、机器故障之后回复数据），或者是为了防止系统故障而将数据备份到一个远程位置。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Redis持久化">
+<meta property="og:url" content="http://blog.sunyh512.cn/2021/08/23/Redis%E6%8C%81%E4%B9%85%E5%8C%96/index.html">
+<meta property="og:site_name" content="Ghuilrei&#39;s Blog">
+<meta property="og:description" content="很多时候我们需要持久化数据也就是将内存中的数据写入到硬盘里面，大部分原因是为了之后重用数据（比如重启机器、机器故障之后回复数据），或者是为了防止系统故障而将数据备份到一个远程位置。">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="http://img.sunyh512.cn/img/20210824072016.png">
+<meta property="article:published_time" content="2021-08-23T12:03:10.000Z">
+<meta property="article:modified_time" content="2021-08-23T23:20:45.072Z">
+<meta property="article:author" content="Ghuilrei">
+<meta property="article:tag" content="Redis">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://img.sunyh512.cn/img/20210824072016.png">
+
+
+<link rel="canonical" href="http://blog.sunyh512.cn/2021/08/23/Redis%E6%8C%81%E4%B9%85%E5%8C%96/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"en","comments":true,"permalink":"http://blog.sunyh512.cn/2021/08/23/Redis%E6%8C%81%E4%B9%85%E5%8C%96/","path":"2021/08/23/Redis持久化/","title":"Redis持久化"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>Redis持久化 | Ghuilrei's Blog</title>
+  
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <h1 class="site-title">Ghuilrei's Blog</h1>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu">
+        <li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a></li>
+        <li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a></li>
+        <li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a></li>
+        <li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a></li>
+        <li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a></li>
+        <li class="menu-item menu-item-schedule"><a href="/schedule/" rel="section"><i class="fa fa-calendar fa-fw"></i>Schedule</a></li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%BF%AB%E7%85%A7%EF%BC%88snapshotting%EF%BC%89"><span class="nav-number">1.</span> <span class="nav-text">快照（snapshotting）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#AOF%EF%BC%88append-only-file%EF%BC%89"><span class="nav-number">2.</span> <span class="nav-text">AOF（append-only file）</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%B8%89%E7%A7%8D%E5%90%8C%E6%AD%A5%E6%96%B9%E5%BC%8F"><span class="nav-number">2.1.</span> <span class="nav-text">三种同步方式</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%87%8D%E5%86%99-%E5%8E%8B%E7%BC%A9AOF"><span class="nav-number">2.2.</span> <span class="nav-text">重写&#x2F;压缩AOF</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%96%87%E4%BB%B6%E9%87%8D%E5%86%99%E6%B5%81%E7%A8%8B%EF%BC%9A"><span class="nav-number">2.2.1.</span> <span class="nav-text">文件重写流程：</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Redis-4-0-%E5%AF%B9%E4%BA%8E%E6%8C%81%E4%B9%85%E5%8C%96%E6%9C%BA%E5%88%B6%E7%9A%84%E4%BC%98%E5%8C%96"><span class="nav-number">3.</span> <span class="nav-text">Redis 4.0 对于持久化机制的优化</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-overview">
+            <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Ghuilrei"
+      src="http://img.sunyh512.cn/img/20210803143027.jpeg">
+  <p class="site-author-name" itemprop="name">Ghuilrei</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">53</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">22</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">43</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+          </div>
+        </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+  <div class="back-to-top" role="button" aria-label="Back to top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://blog.sunyh512.cn/2021/08/23/Redis%E6%8C%81%E4%B9%85%E5%8C%96/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="http://img.sunyh512.cn/img/20210803143027.jpeg">
+      <meta itemprop="name" content="Ghuilrei">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Ghuilrei's Blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Redis持久化
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">Posted on</span>
+
+      <time title="Created: 2021-08-23 20:03:10" itemprop="dateCreated datePublished" datetime="2021-08-23T20:03:10+08:00">2021-08-23</time>
+    </span>
+      <span class="post-meta-item">
+        <span class="post-meta-item-icon">
+          <i class="far fa-calendar-check"></i>
+        </span>
+        <span class="post-meta-item-text">Edited on</span>
+        <time title="Modified: 2021-08-24 07:20:45" itemprop="dateModified" datetime="2021-08-24T07:20:45+08:00">2021-08-24</time>
+      </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">In</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/Redis/" itemprop="url" rel="index"><span itemprop="name">Redis</span></a>
+        </span>
+    </span>
+
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <p>很多时候我们需要持久化数据也就是将内存中的数据写入到硬盘里面，大部分原因是为了之后重用数据（比如重启机器、机器故障之后回复数据），或者是为了防止系统故障而将数据备份到一个远程位置。</p>
+<span id="more"></span>
+
+<p>Redis不同于Memcached的很重一点就是，Redis支持持久化，而且支持两种不同的持久化操作。</p>
+<ul>
+<li>  快照（snapshotting，RDB）</li>
+<li>  只追加文件（append-only file,AOF）</li>
+</ul>
+<h2 id="快照（snapshotting）"><a href="#快照（snapshotting）" class="headerlink" title="快照（snapshotting）"></a>快照（snapshotting）</h2><p>Redis可以通过创建快照来获得存储在内存里面的数据在某个时间点上的副本。</p>
+<p>Redis创建快照之后，可以对快照进行备份，可以将快照复制到其他服务器从而创建具有相同数据的服务器副本（Redis主从结构，主要用来提高Redis性能），还可以将快照留在原地以便重启服务器的时候使用。</p>
+<p><strong>快照持久化是Redis默认采用的持久化方式</strong>，在redis.conf配置文件中默认有此下配置：</p>
+<figure class="highlight nginx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># The filename where to dump the DB</span></span><br><span class="line"><span class="attribute">dbfilename</span> dump.rdb</span><br><span class="line"></span><br><span class="line"><span class="comment"># Save the DB to disk.</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="comment"># save &lt;seconds&gt; &lt;changes&gt;</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="comment"># Redis will save the DB if both the given number of seconds and the given</span></span><br><span class="line"><span class="comment"># number of write operations against the DB occurred.</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="comment"># Snapshotting can be completely disabled with a single empty string argument</span></span><br><span class="line"><span class="comment"># as in following example:</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="comment"># save &quot;&quot;</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="comment"># Unless specified otherwise, by default Redis will save the DB:</span></span><br><span class="line"><span class="comment">#   * After 3600 seconds (an hour) if at least 1 key changed</span></span><br><span class="line"><span class="comment">#   * After 300 seconds (5 minutes) if at least 100 keys changed</span></span><br><span class="line"><span class="comment">#   * After 60 seconds if at least 10000 keys changed</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="comment"># You can set these explicitly by uncommenting the three following lines.</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="comment"># 在900秒(15分钟)之后，如果至少有1个key发生变化，Redis就会自动触发BGSAVE命令创建快照。</span></span><br><span class="line"><span class="comment"># save 900 1</span></span><br><span class="line"><span class="comment"># 在300秒(5分钟)之后，如果至少有10个key发生变化，Redis就会自动触发BGSAVE命令创建快照。</span></span><br><span class="line"><span class="comment"># save 300 10</span></span><br><span class="line"><span class="comment"># 在60秒(1分钟)之后，如果至少有10000个key发生变化，Redis就会自动触发BGSAVE命令创建快照。</span></span><br><span class="line"><span class="comment"># save 60 10000</span></span><br></pre></td></tr></table></figure>
+
+<p>根据配置，快照将被写入dbfilename选项指定的文件里面，并存储在dir选项指定的路径上面。</p>
+<p>如果在新的快照文件创建完毕之前，Redis、系统或者硬件这三者中的任意一个崩溃了，那么Redis将丢失最近一次创建快照写入的所有数据。</p>
+<blockquote>
+<p>  举个例子：</p>
+<p>  假设Redis的上一个快照是2：35开始创建的，并且已经创建成功。</p>
+<p>  下午3：06时，Redis又开始创建新的快照，并且在下午3：08快照创建完毕之前，有35个键进行了更新。</p>
+<p>  如果在下午3：06到3：08期间，系统发生了崩溃，导致Redis无法完成新快照的创建工作，那么Redis将丢失下午2：35之后写入的所有数据。</p>
+<p>  另一方面，如果系统恰好在新的快照文件创建完毕之后崩溃，那么Redis将丢失35个键的更新数据。</p>
+</blockquote>
+<p>创建快照的办法：</p>
+<ul>
+<li><p><code>BGSAVE</code>命令： </p>
+<p>  客户端向Redis发送 <code>BGSAVE</code>命令 来创建一个快照。</p>
+<p>  对于支持 <code>BGSAVE</code>命令 的平台来说（基本上所有平台支持，除了Windows平台），Redis会调用fork来创建一个子进程，然后子进程负责将快照写入硬盘，而父进程则继续处理命令请求。</p>
+</li>
+<li><p><code>SAVE</code>命令： </p>
+<p>  客户端还可以向Redis发送 <code>SAVE</code>命令 来创建一个快照，接到SAVE命令的Redis服务器在快照创建完毕之前不会再响应任何其他命令。</p>
+<p>  SAVE命令不常用，我们通常只会在没有足够内存去执行 <code>BGSAVE</code>命令 的情况下，又或者即使等待持久化操作执行完毕也无所谓的情况下，才会使用这个命令。</p>
+</li>
+<li><p><code>save</code>选项： </p>
+<p>  如果用户设置了save选项（一般会默认设置），比如 <code>save 60 10000</code>，那么从Redis最近一次创建快照之后开始算起，当“60秒之内有10000次写入”这个条件被满足时，Redis就会自动触发 <code>BGSAVE</code>命令。</p>
+</li>
+<li><p><code>SHUTDOWN</code>命令：  </p>
+<p>  当Redis通过 <code>SHUTDOWN</code>命令 接收到关闭服务器的请求时，或者接收到标准TERM信号时，会执行一个SAVE命令，阻塞所有客户端，不再执行客户端发送的任何命令，并在SAVE命令执行完毕之后关闭服务器。</p>
+</li>
+<li><p>一个Redis服务器连接到另一个Redis服务器： </p>
+<p>  当一个Redis服务器连接到另一个Redis服务器，并向对方发送SYNC命令来开始一次复制操作的时候，如果主服务器目前没有执行BGSAVE操作，或者主服务器并非刚刚执行完BGSAVE操作，那么主服务器就会执行BGSAVE命令</p>
+</li>
+</ul>
+<p>如果系统真的发生崩溃，用户将丢失最近一次生成快照之后更改的所有数据。因此，快照持久化只适用于即使丢失一部分数据也不会造成一些大问题的应用程序。不能接受这个缺点的话，可以考虑AOF持久化。</p>
+<h2 id="AOF（append-only-file）"><a href="#AOF（append-only-file）" class="headerlink" title="AOF（append-only file）"></a>AOF（append-only file）</h2><p>与快照持久化相比，AOF持久化 的实时性更好，因此已成为主流的持久化方案。</p>
+<p>默认情况下Redis没有开启AOF（append only file）方式的持久化，可以通过appendonly参数开启：</p>
+<figure class="highlight nginx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># By default Redis asynchronously dumps the dataset on disk. This mode is</span></span><br><span class="line"><span class="comment"># good enough in many applications, but an issue with the Redis process or</span></span><br><span class="line"><span class="comment"># a power outage may result into a few minutes of writes lost (depending on</span></span><br><span class="line"><span class="comment"># the configured save points).</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="comment"># The Append Only File is an alternative persistence mode that provides</span></span><br><span class="line"><span class="comment"># much better durability. For instance using the default data fsync policy</span></span><br><span class="line"><span class="comment"># (see later in the config file) Redis can lose just one second of writes in a</span></span><br><span class="line"><span class="comment"># dramatic event like a server power outage, or a single write if something</span></span><br><span class="line"><span class="comment"># wrong with the Redis process itself happens, but the operating system is</span></span><br><span class="line"><span class="comment"># still running correctly.</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="comment"># AOF and RDB persistence can be enabled at the same time without problems.</span></span><br><span class="line"><span class="comment"># If the AOF is enabled on startup Redis will load the AOF, that is the file</span></span><br><span class="line"><span class="comment"># with the better durability guarantees.</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="comment"># Please check http://redis.io/topics/persistence for more information.</span></span><br><span class="line"></span><br><span class="line"><span class="attribute">appendonly</span> <span class="literal">yes</span></span><br></pre></td></tr></table></figure>
+
+<p>开启AOF持久化后每执行一条会更改Redis中的数据的命令，Redis就会将该命令写入硬盘中的AOF文件。</p>
+<p>AOF文件的保存位置和RDB文件的位置相同，都是通过dir参数设置的，默认的文件名是appendonly.aof。</p>
+<h3 id="三种同步方式"><a href="#三种同步方式" class="headerlink" title="三种同步方式"></a>三种同步方式</h3><figure class="highlight nginx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#每次有数据修改发生时都会写入AOF文件,这样会严重降低Redis的速度</span></span><br><span class="line"><span class="attribute">appendfsync</span> always</span><br><span class="line"><span class="comment">#每秒钟同步一次，显示地将多个写命令同步到硬盘</span></span><br><span class="line">appendfsync everysec</span><br><span class="line"><span class="comment">#让操作系统决定何时进行同步</span></span><br><span class="line">appendfsync <span class="literal">no</span></span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><p><code>appendfsync always</code>：</p>
+<p>  可以实现将数据丢失减到最少，不过这种方式需要对硬盘进行大量的写入而且每次只写入一个命令，十分影响Redis的速度。另外使用固态硬盘的用户谨慎使用<code>appendfsync always</code>选项，因为这会明显降低固态硬盘的使用寿命。</p>
+</li>
+<li><p><code>appendfsync everysec</code>：</p>
+<p>  为了兼顾数据和写入性能，用户可以考虑 appendfsync everysec选项 ，让Redis每秒同步一次AOF文件，Redis性能几乎没受到任何影响。而且这样即使出现系统崩溃，用户最多只会丢失一秒之内产生的数据。当硬盘忙于执行写入操作的时候，Redis还会优雅的放慢自己的速度以便适应硬盘的最大写入速度。</p>
+</li>
+<li><p><code>appendfsync no</code>：</p>
+<p>  appendfsync no  选项一般不推荐，这种方案会使Redis丢失不定量的数据而且如果用户的硬盘处理写入操作的速度不够的话，那么当缓冲区被等待写入的数据填满时，Redis的写入操作将被阻塞，这会导致Redis的请求速度变慢。</p>
+</li>
+</ul>
+<p>虽然AOF持久化非常灵活地提供了多种不同的选项来满足不同应用程序对数据安全的不同要求，但AOF持久化也有缺陷——AOF文件的体积太大。</p>
+<h3 id="重写-压缩AOF"><a href="#重写-压缩AOF" class="headerlink" title="重写/压缩AOF"></a>重写/压缩AOF</h3><p>AOF虽然在某个角度可以将数据丢失降低到最小而且对性能影响也很小，但是极端的情况下，体积不断增大的AOF文件很可能会用完硬盘空间。</p>
+<p>另外，如果AOF体积过大，那么还原操作执行时间就可能会非常长。</p>
+<p>为了解决AOF体积过大的问题，用户可以向Redis发送 <code>BGREWRITEAOF</code>命令 ，这个命令会通过移除AOF文件中的冗余命令来重写（rewrite）AOF文件来减小AOF文件的体积。</p>
+<p><code>BGREWRITEAOF</code>命令和<code>BGSAVE</code>创建快照原理十分相似，所以AOF文件重写也需要用到子进程，这样会导致性能问题和内存占用问题，和快照持久化一样。更糟糕的是，如果不加以控制的话，AOF文件的体积可能会比快照文件大好几倍。</p>
+<h4 id="文件重写流程："><a href="#文件重写流程：" class="headerlink" title="文件重写流程："></a>文件重写流程：</h4><p><img src="http://img.sunyh512.cn/img/20210824072016.png" alt="文件重写流程"></p>
+<ol>
+<li>  触发重写，执行<code>bgrewriteaof</code>命令</li>
+<li>  父进程fork子进程进行重写，fork子进程的同时父进程阻塞，fork完毕父进程继续接受指令（子进程只是父进程的快照（相当于复制了某时刻的父进程））</li>
+<li>  子进程在创建新的aof文件的同时，父进程继续接收write指令，存储到继续存到<code>aof_buf</code>缓存中和<code>aof_rewirte_buf</code>缓存中，所以父进程继续往旧的aof文件中备份，同时也要往新的AOf文件中备份。</li>
+<li>  新的aof备份完成</li>
+<li>  同时父进程，备份的新文件创建完成</li>
+<li>  将aof_rewrite_buf缓存中的备份到新的aof文件中</li>
+<li>  新的文件替换就的aof文件</li>
+</ol>
+<hr>
+<p>和快照持久化可以通过设置save选项来自动执行BGSAVE一样，AOF持久化也可以通过设置<code>auto-aof-rewrite-percentage</code>选项和<code>auto-aof-rewrite-min-size</code>选项自动执行<code>BGREWRITEAOF</code>命令。</p>
+<p>举例：假设用户对Redis设置了如下配置选项并且启用了AOF持久化。那么当AOF文件体积大于64MB，并且AOF的体积比上一次重写之后的体积大了至少一倍（100%）的时候，Redis将执行<code>BGREWRITEAOF</code>命令。</p>
+<figure class="highlight nginx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">auto-aof-rewrite-<span class="attribute">percentage</span> <span class="number">100</span>  </span><br><span class="line">auto-aof-rewrite-min-size 64mb</span><br></pre></td></tr></table></figure>
+
+<p>无论是AOF持久化还是快照持久化，将数据持久化到硬盘上都是非常有必要的，但除了进行持久化外，用户还必须对持久化得到的文件进行备份（最好是备份到不同的地方），这样才能尽量避免数据丢失事故发生。如果条件允许的话，最好能将快照文件和重新重写的AOF文件备份到不同的服务器上面。</p>
+<p>随着负载量的上升，或者数据的完整性变得 越来越重要时，用户可能需要使用到复制特性。</p>
+<h2 id="Redis-4-0-对于持久化机制的优化"><a href="#Redis-4-0-对于持久化机制的优化" class="headerlink" title="Redis 4.0 对于持久化机制的优化"></a>Redis 4.0 对于持久化机制的优化</h2><p>Redis 4.0 开始支持 RDB 和 AOF 的混合持久化（默认关闭，可以通过配置项 <code>aof-use-rdb-preamble</code> 开启）。</p>
+<p>如果把混合持久化打开，AOF 重写的时候就直接把 RDB 的内容写到 AOF 文件开头。这样做的好处是可以结合 RDB 和 AOF 的优点, 快速加载同时避免丢失过多的数据。当然缺点也是有的， AOF 里面的 RDB 部分就是压缩格式不再是 AOF 格式，可读性较差。</p>
+<hr>
+<p><strong>参考自：</strong></p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Redis/" rel="tag"># Redis</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2021/08/20/Java%E5%B9%B6%E5%8F%91%E4%B9%8Bsynchronized%E4%BD%9C%E7%94%A8%E5%9F%9F/" rel="prev" title="Java并发之synchronized作用域">
+                  <i class="fa fa-chevron-left"></i> Java并发之synchronized作用域
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2021/08/24/Redis%E9%9B%86%E7%BE%A4/" rel="next" title="Redis集群">
+                  Redis集群 <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Ghuilrei</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/" rel="noopener" target="_blank">NexT.Gemini</a>
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <script src="https://cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/next-boot.js"></script>
+
+  
+
+
+
+
+  
+
+
+
+
+  
+
+  <script class="next-config" data-name="enableMath" type="application/json">true</script><script class="next-config" data-name="mathjax" type="application/json">{"enable":true,"tags":"none","js":{"url":"https://cdn.jsdelivr.net/npm/mathjax@3.1.4/es5/tex-mml-chtml.js","integrity":"sha256-ncNI9OXOS5Ek4tzVYiOMmN/KKCPZ6V0Cpv2P/zHntiA="}}</script>
+<script src="/js/third-party/math/mathjax.js"></script>
+
+
+
+</body>
+</html>

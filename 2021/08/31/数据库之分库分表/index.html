@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.3/css/all.min.css" integrity="sha256-2H3fkXt6FEmrReK448mDVGKb3WW2ZZw35gI7vqHOE4Y=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"blog.sunyh512.cn","root":"/","images":"/images","scheme":"Gemini","version":"8.5.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":false,"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"Searching...","empty":"We didn't find any results for the search: ${query}","hits_time":"${hits} results found in ${time} ms","hits":"${hits} results found"}}</script><script src="/js/config.js"></script>
+<meta name="description" content="分库：从单个数据库拆分成多个数据库的过程，将数据散落在多个数据库中。 分表：从单张表拆分成多张表的过程，将数据散落在多张表内。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="数据库之分库分表">
+<meta property="og:url" content="http://blog.sunyh512.cn/2021/08/31/%E6%95%B0%E6%8D%AE%E5%BA%93%E4%B9%8B%E5%88%86%E5%BA%93%E5%88%86%E8%A1%A8/index.html">
+<meta property="og:site_name" content="Ghuilrei&#39;s Blog">
+<meta property="og:description" content="分库：从单个数据库拆分成多个数据库的过程，将数据散落在多个数据库中。 分表：从单张表拆分成多张表的过程，将数据散落在多张表内。">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://pic1.zhimg.com/80/v2-2ba664c804fcad455cb17b2502825ec4_1440w.jpg?source=1940ef5c">
+<meta property="article:published_time" content="2021-08-31T12:49:20.000Z">
+<meta property="article:modified_time" content="2021-08-31T13:00:41.387Z">
+<meta property="article:author" content="Ghuilrei">
+<meta property="article:tag" content="数据库">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://pic1.zhimg.com/80/v2-2ba664c804fcad455cb17b2502825ec4_1440w.jpg?source=1940ef5c">
+
+
+<link rel="canonical" href="http://blog.sunyh512.cn/2021/08/31/%E6%95%B0%E6%8D%AE%E5%BA%93%E4%B9%8B%E5%88%86%E5%BA%93%E5%88%86%E8%A1%A8/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"en","comments":true,"permalink":"http://blog.sunyh512.cn/2021/08/31/%E6%95%B0%E6%8D%AE%E5%BA%93%E4%B9%8B%E5%88%86%E5%BA%93%E5%88%86%E8%A1%A8/","path":"2021/08/31/数据库之分库分表/","title":"数据库之分库分表"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>数据库之分库分表 | Ghuilrei's Blog</title>
+  
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <h1 class="site-title">Ghuilrei's Blog</h1>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu">
+        <li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a></li>
+        <li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a></li>
+        <li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a></li>
+        <li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a></li>
+        <li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a></li>
+        <li class="menu-item menu-item-schedule"><a href="/schedule/" rel="section"><i class="fa fa-calendar fa-fw"></i>Schedule</a></li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E8%A6%81%E5%88%86%E5%BA%93%E5%88%86%E8%A1%A8%EF%BC%9F"><span class="nav-number">1.</span> <span class="nav-text">为什么要分库分表？</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BB%8E%E6%80%A7%E8%83%BD%E4%B8%8A%E7%9C%8B"><span class="nav-number">2.</span> <span class="nav-text">从性能上看</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BB%8E%E5%8F%AF%E7%94%A8%E6%80%A7%E4%B8%8A%E7%9C%8B"><span class="nav-number">3.</span> <span class="nav-text">从可用性上看</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BA%8C-%E5%A6%82%E4%BD%95%E5%88%86%E5%BA%93%E5%88%86%E8%A1%A8"><span class="nav-number">4.</span> <span class="nav-text">二 如何分库分表</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#1-%E5%88%86%E5%BA%93%EF%BC%9F%E5%88%86%E8%A1%A8%EF%BC%9F%E8%BF%98%E6%98%AF%E6%97%A2%E5%88%86%E5%BA%93%E5%8F%88%E5%88%86%E8%A1%A8%EF%BC%9F"><span class="nav-number">5.</span> <span class="nav-text">1 分库？分表？还是既分库又分表？</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-%E5%A6%82%E4%BD%95%E9%80%89%E6%8B%A9%E6%88%91%E4%BB%AC%E8%87%AA%E5%B7%B1%E7%9A%84%E5%88%87%E5%88%86%E6%96%B9%E6%A1%88%EF%BC%9F"><span class="nav-number">6.</span> <span class="nav-text">2 如何选择我们自己的切分方案？</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%A6%82%E6%9E%9C%E9%9C%80%E8%A6%81%E5%88%86%E8%A1%A8%EF%BC%8C%E9%82%A3%E4%B9%88%E5%88%86%E5%A4%9A%E5%B0%91%E5%BC%A0%E8%A1%A8%E5%90%88%E9%80%82%EF%BC%9F"><span class="nav-number">7.</span> <span class="nav-text">如果需要分表，那么分多少张表合适？</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%A6%82%E6%9E%9C%E9%9C%80%E8%A6%81%E5%88%86%E5%BA%93%EF%BC%8C%E9%82%A3%E4%B9%88%E5%88%86%E5%A4%9A%E5%B0%91%E5%BA%93%E5%90%88%E9%80%82%EF%BC%9F"><span class="nav-number">8.</span> <span class="nav-text">如果需要分库，那么分多少库合适？</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-%E5%A6%82%E4%BD%95%E5%AF%B9%E6%95%B0%E6%8D%AE%E8%BF%9B%E8%A1%8C%E5%88%87%E5%88%86%EF%BC%9F"><span class="nav-number">9.</span> <span class="nav-text">3 如何对数据进行切分？</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-overview">
+            <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Ghuilrei"
+      src="http://img.sunyh512.cn/img/20210803143027.jpeg">
+  <p class="site-author-name" itemprop="name">Ghuilrei</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">53</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">22</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">43</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+          </div>
+        </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+  <div class="back-to-top" role="button" aria-label="Back to top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://blog.sunyh512.cn/2021/08/31/%E6%95%B0%E6%8D%AE%E5%BA%93%E4%B9%8B%E5%88%86%E5%BA%93%E5%88%86%E8%A1%A8/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="http://img.sunyh512.cn/img/20210803143027.jpeg">
+      <meta itemprop="name" content="Ghuilrei">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Ghuilrei's Blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          数据库之分库分表
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">Posted on</span>
+      
+
+      <time title="Created: 2021-08-31 20:49:20 / Modified: 21:00:41" itemprop="dateCreated datePublished" datetime="2021-08-31T20:49:20+08:00">2021-08-31</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">In</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E6%95%B0%E6%8D%AE%E5%BA%93/" itemprop="url" rel="index"><span itemprop="name">数据库</span></a>
+        </span>
+    </span>
+
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <p>分库：从单个数据库拆分成多个数据库的过程，将数据散落在多个数据库中。</p>
+<p>分表：从单张表拆分成多张表的过程，将数据散落在多张表内。</p>
+<span id="more"></span>
+
+<h3 id="为什么要分库分表？"><a href="#为什么要分库分表？" class="headerlink" title="为什么要分库分表？"></a>为什么要分库分表？</h3><p>关键字：提升性能、增加可用性。</p>
+<h3 id="从性能上看"><a href="#从性能上看" class="headerlink" title="从性能上看"></a>从性能上看</h3><p>随着单库中的数据量越来越大、数据库的查询QPS越来越高，相应的，对数据库的读写所需要的时间也越来越多。数据库的读写性能可能会成为业务发展的瓶颈。对应的，就需要做数据库性能方面的优化。本文中我们只讨论数据库层面的优化，不讨论缓存等应用层优化的手段。</p>
+<p>如果数据库的查询QPS过高，就需要考虑拆库，通过分库来分担单个数据库的连接压力。比如，如果查询QPS为3500，假设单库可以支撑1000个连接数的话，那么就可以考虑拆分成4个库，来分散查询连接压力。</p>
+<p>如果单表数据量过大，当数据量超过一定量级后，无论是对于数据查询还是数据更新，在经过索引优化等纯数据库层面的传统优化手段之后，还是可能存在性能问题。这是量变产生了质变，这时候就需要去换个思路来解决问题，比如：从数据生产源头、数据处理源头来解决问题，既然数据量很大，那我们就来个分而治之，化整为零。这就产生了分表，把数据按照一定的规则拆分成多张表，来解决单表环境下无法解决的存取性能问题。</p>
+<h3 id="从可用性上看"><a href="#从可用性上看" class="headerlink" title="从可用性上看"></a>从可用性上看</h3><p>单个数据库如果发生意外，很可能会丢失所有数据。尤其是云时代，很多数据库都跑在虚拟机上，如果虚拟机/宿主机发生意外，则可能造成无法挽回的损失。因此，除了传统的 Master-Slave、Master-Master 等部署层面解决可靠性问题外，我们也可以考虑从数据拆分层面解决此问题。</p>
+<p>此处我们以数据库宕机为例：</p>
+<ul>
+<li>  单库部署情况下，如果数据库宕机，那么故障影响就是100%，而且恢复可能耗时很长。</li>
+<li>  如果我们拆分成2个库，分别部署在不同的机器上，此时其中1个库宕机，那么故障影响就是50%，还有50%的数据可以继续服务。</li>
+<li>  如果我们拆分成4个库，分别部署在不同的机器上，此时其中1个库宕机，那么故障影响就是25%，还有75%的数据可以继续服务，恢复耗时也会很短。</li>
+</ul>
+<p>当然，我们也不能无限制的拆库，这也是牺牲存储资源来提升性能、可用性的方式，毕竟资源总是有限的。</p>
+<h3 id="二-如何分库分表"><a href="#二-如何分库分表" class="headerlink" title="二 如何分库分表"></a>二 如何分库分表</h3><h3 id="1-分库？分表？还是既分库又分表？"><a href="#1-分库？分表？还是既分库又分表？" class="headerlink" title="1 分库？分表？还是既分库又分表？"></a>1 分库？分表？还是既分库又分表？</h3><p>从第一部分了解到的信息来看，分库分表方案可以分为下面3种：</p>
+<p><img src="https://pic1.zhimg.com/80/v2-2ba664c804fcad455cb17b2502825ec4_1440w.jpg?source=1940ef5c" alt="img"></p>
+<h3 id="2-如何选择我们自己的切分方案？"><a href="#2-如何选择我们自己的切分方案？" class="headerlink" title="2 如何选择我们自己的切分方案？"></a>2 如何选择我们自己的切分方案？</h3><h3 id="如果需要分表，那么分多少张表合适？"><a href="#如果需要分表，那么分多少张表合适？" class="headerlink" title="如果需要分表，那么分多少张表合适？"></a>如果需要分表，那么分多少张表合适？</h3><p>由于所有的技术都是为业务服务的，那么，我们就先从数据方面回顾下业务背景。</p>
+<p>比如，我们这个业务系统是为了解决会员的咨询诉求，通过我们的XSpace客服平台系统来服务会员，目前主要以同步的离线工单数据作为我们的数据源来构建自己的数据。</p>
+<p>假设，每一笔离线工单都会产生对应一笔会员的咨询问题（我们简称：问题单），如果：</p>
+<ul>
+<li>  在线渠道：每天产生 3w 笔聊天会话，假设，其中50%的会话会生成一笔离线工单，那么每天可生成 3w * 50% = 1.5w 笔工单；</li>
+<li>  热线渠道：每天产生 2.5w 通电话，假设，其中80%的电话都会产生一笔工单，那么每天可生成 2.5w * 80% = 2w 笔/天；</li>
+<li>  离线渠道：假设离线渠道每天直接生成 3w 笔；</li>
+</ul>
+<p>合计共 1.5w + 2w + 3w = 6.5w 笔/天</p>
+<p>考虑到以后可能要继续覆盖的新的业务场景，需要提前预留部分扩展空间，这里我们假设为每天产生 8w 笔问题单。</p>
+<p>除问题单外，还有另外2张常用的业务表：用户操作日志表、用户提交的表单数据表。</p>
+<p>其中，每笔问题单都会产生多条用户操作日志，根据历史统计数据来可以看到，平均每个问题单大约会产生8条操作日志，我们预留一部分空间，假设每个问题单平均产生约10条用户操作日志。</p>
+<p>如果系统设计使用年限5年，那么问题单数据量大约 = 5年 <em>365天/年</em> 8w/天 = 1.46亿，那么估算出的表数量如下：</p>
+<ul>
+<li>  问题单需要：1.46亿/500w = 29.2 张表，我们就按 32 张表来切分；</li>
+<li>  操作日志需要 ：32 <em>10 = 320 张表，我们就按 32</em> 16 = 512 张表来切分。</li>
+</ul>
+<h3 id="如果需要分库，那么分多少库合适？"><a href="#如果需要分库，那么分多少库合适？" class="headerlink" title="如果需要分库，那么分多少库合适？"></a>如果需要分库，那么分多少库合适？</h3><p>分库的时候除了要考虑平时的业务峰值读写QPS外，还要考虑到诸如双11大促期间可能达到的峰值，需要提前做好预估。</p>
+<p>根据我们的实际业务场景，问题单的数据查询来源主要来自于阿里客服小蜜首页。因此，可以根据历史QPS、RT等数据评估，假设我们只需要3500数据库连接数，如果单库可以承担最高1000个数据库连接，那么我们就可以拆分成4个库。</p>
+<h3 id="3-如何对数据进行切分？"><a href="#3-如何对数据进行切分？" class="headerlink" title="3 如何对数据进行切分？"></a>3 如何对数据进行切分？</h3><p>根据行业惯例，通常按照 水平切分、垂直切分 两种方式进行切分，当然，有些复杂业务场景也可能选择两者结合的方式。</p>
+<p>（1）水平切分</p>
+<p>这是一种横向按业务维度切分的方式，比如常见的按会员维度切分，根据一定的规则把不同的会员相关的数据散落在不同的库表中。由于我们的业务场景决定都是从会员视角进行数据读写，所以，我们就选择按照水平方式进行数据库切分。</p>
+<p>（2）垂直切分</p>
+<p>垂直切分可以简单理解为，把一张表的不同字段拆分到不同的表中。</p>
+<p>比如：假设有个小型电商业务，把一个订单相关的商品信息、买卖家信息、支付信息都放在一张大表里。可以考虑通过垂直切分的方式，把商品信息、买家信息、卖家信息、支付信息都单独拆分成独立的表，并通过订单号跟订单基本信息关联起来。</p>
+<p>也有一种情况，如果一张表有10个字段，其中只有3个字段需要频繁修改，那么就可以考虑把这3个字段拆分到子表。避免在修改这3个数据时，影响到其余7个字段的查询行锁定。</p>
+<hr>
+<p>作者：阿里技术<br>链接：<a target="_blank" rel="noopener" href="https://www.zhihu.com/question/448775613/answer/1774351830">https://www.zhihu.com/question/448775613/answer/1774351830</a><br>来源：知乎<br>著作权归作者所有。商业转载请联系作者获得授权，非商业转载请注明出处。</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/%E6%95%B0%E6%8D%AE%E5%BA%93/" rel="tag"># 数据库</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2021/08/30/MQ%E4%B9%8B%E5%B8%B8%E7%94%A8%E7%9A%84%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/" rel="prev" title="MQ之常用的消息队列">
+                  <i class="fa fa-chevron-left"></i> MQ之常用的消息队列
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2021/09/02/%E5%AE%9E%E7%8E%B0%E9%A2%98-%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E8%AF%BB%E8%80%85%E4%BC%98%E5%85%88%E9%97%AE%E9%A2%98/" rel="next" title="实现题-操作系统读者优先问题">
+                  实现题-操作系统读者优先问题 <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Ghuilrei</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/" rel="noopener" target="_blank">NexT.Gemini</a>
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <script src="https://cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/next-boot.js"></script>
+
+  
+
+
+
+
+  
+
+
+
+
+  
+
+  <script class="next-config" data-name="enableMath" type="application/json">true</script><script class="next-config" data-name="mathjax" type="application/json">{"enable":true,"tags":"none","js":{"url":"https://cdn.jsdelivr.net/npm/mathjax@3.1.4/es5/tex-mml-chtml.js","integrity":"sha256-ncNI9OXOS5Ek4tzVYiOMmN/KKCPZ6V0Cpv2P/zHntiA="}}</script>
+<script src="/js/third-party/math/mathjax.js"></script>
+
+
+
+</body>
+</html>

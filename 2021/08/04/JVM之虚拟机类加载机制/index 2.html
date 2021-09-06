@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.3/css/all.min.css" integrity="sha256-2H3fkXt6FEmrReK448mDVGKb3WW2ZZw35gI7vqHOE4Y=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"blog.sunyh512.cn","root":"/","images":"/images","scheme":"Gemini","version":"8.5.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":false,"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"Searching...","empty":"We didn't find any results for the search: ${query}","hits_time":"${hits} results found in ${time} ms","hits":"${hits} results found"}}</script><script src="/js/config.js"></script>
+<meta name="description" content="JVM之虚拟机类加载机制">
+<meta property="og:type" content="article">
+<meta property="og:title" content="JVM之虚拟机类加载机制">
+<meta property="og:url" content="http://blog.sunyh512.cn/2021/08/04/JVM%E4%B9%8B%E8%99%9A%E6%8B%9F%E6%9C%BA%E7%B1%BB%E5%8A%A0%E8%BD%BD%E6%9C%BA%E5%88%B6/index.html">
+<meta property="og:site_name" content="Ghuilrei&#39;s Blog">
+<meta property="og:description" content="JVM之虚拟机类加载机制">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="http://img.sunyh512.cn/img/20210718215438.png">
+<meta property="og:image" content="http://img.sunyh512.cn/img/20210803100822.png">
+<meta property="article:published_time" content="2021-08-04T09:52:29.000Z">
+<meta property="article:modified_time" content="2021-08-04T10:47:18.000Z">
+<meta property="article:author" content="Ghuilrei">
+<meta property="article:tag" content="JVM">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://img.sunyh512.cn/img/20210718215438.png">
+
+
+<link rel="canonical" href="http://blog.sunyh512.cn/2021/08/04/JVM%E4%B9%8B%E8%99%9A%E6%8B%9F%E6%9C%BA%E7%B1%BB%E5%8A%A0%E8%BD%BD%E6%9C%BA%E5%88%B6/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"en","comments":true,"permalink":"http://blog.sunyh512.cn/2021/08/04/JVM%E4%B9%8B%E8%99%9A%E6%8B%9F%E6%9C%BA%E7%B1%BB%E5%8A%A0%E8%BD%BD%E6%9C%BA%E5%88%B6/","path":"2021/08/04/JVM之虚拟机类加载机制/","title":"JVM之虚拟机类加载机制"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>JVM之虚拟机类加载机制 | Ghuilrei's Blog</title>
+  
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <h1 class="site-title">Ghuilrei's Blog</h1>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu">
+        <li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a></li>
+        <li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a></li>
+        <li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a></li>
+        <li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a></li>
+        <li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a></li>
+        <li class="menu-item menu-item-schedule"><a href="/schedule/" rel="section"><i class="fa fa-calendar fa-fw"></i>Schedule</a></li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%B1%BB%E5%8A%A0%E8%BD%BD%E8%BF%87%E7%A8%8B"><span class="nav-number">1.</span> <span class="nav-text">类加载过程</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%BF%85%E9%A1%BB%E7%AB%8B%E5%8D%B3%E5%AF%B9%E7%B1%BB%E8%BF%9B%E8%A1%8C%E2%80%9C%E5%88%9D%E5%A7%8B%E5%8C%96%E2%80%9D"><span class="nav-number">1.1.</span> <span class="nav-text">必须立即对类进行“初始化”</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%B1%BB%E5%8A%A0%E8%BD%BD%E6%A8%A1%E5%9E%8B"><span class="nav-number">2.</span> <span class="nav-text">类加载模型</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%B1%BB%E5%8A%A0%E8%BD%BD%E5%99%A8%E4%B8%8E%E7%B1%BB%E7%9A%84%E5%94%AF%E4%B8%80%E6%80%A7"><span class="nav-number">2.1.</span> <span class="nav-text">类加载器与类的唯一性</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%8F%8C%E4%BA%B2%E5%A7%94%E6%B4%BE%E6%A8%A1%E5%9E%8B"><span class="nav-number">2.2.</span> <span class="nav-text">双亲委派模型</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E7%88%B6%E5%8A%A0%E8%BD%BD%E5%99%A8%E4%BC%9A%E6%97%A0%E6%B3%95%E5%8A%A0%E8%BD%BD%E6%9F%90%E4%B8%80%E4%B8%AA%E7%B1%BB"><span class="nav-number">2.2.1.</span> <span class="nav-text">父加载器会无法加载某一个类</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E9%9C%80%E8%A6%81%E5%8F%8C%E4%BA%B2%E5%A7%94%E6%B4%BE"><span class="nav-number">2.2.2.</span> <span class="nav-text">为什么需要双亲委派</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%8F%8C%E4%BA%B2%E5%A7%94%E6%B4%BE%E6%98%AF%E6%80%8E%E4%B9%88%E5%AE%9E%E7%8E%B0%E7%9A%84"><span class="nav-number">2.2.3.</span> <span class="nav-text">双亲委派是怎么实现的</span></a></li></ol></li></ol></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-overview">
+            <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Ghuilrei"
+      src="http://img.sunyh512.cn/img/20210803143027.jpeg">
+  <p class="site-author-name" itemprop="name">Ghuilrei</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">42</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">16</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">31</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+          </div>
+        </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+  <div class="back-to-top" role="button" aria-label="Back to top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://blog.sunyh512.cn/2021/08/04/JVM%E4%B9%8B%E8%99%9A%E6%8B%9F%E6%9C%BA%E7%B1%BB%E5%8A%A0%E8%BD%BD%E6%9C%BA%E5%88%B6/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="http://img.sunyh512.cn/img/20210803143027.jpeg">
+      <meta itemprop="name" content="Ghuilrei">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Ghuilrei's Blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          JVM之虚拟机类加载机制
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">Posted on</span>
+      
+
+      <time title="Created: 2021-08-04 17:52:29 / Modified: 18:47:18" itemprop="dateCreated datePublished" datetime="2021-08-04T17:52:29+08:00">2021-08-04</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">In</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/Java%E4%BD%93%E7%B3%BB/" itemprop="url" rel="index"><span itemprop="name">Java体系</span></a>
+        </span>
+          , 
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/Java%E4%BD%93%E7%B3%BB/JVM/" itemprop="url" rel="index"><span itemprop="name">JVM</span></a>
+        </span>
+    </span>
+
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <p>JVM之虚拟机类加载机制</p>
+<span id="more"></span>
+
+<h2 id="类加载过程"><a href="#类加载过程" class="headerlink" title="类加载过程"></a>类加载过程</h2><p><img src="http://img.sunyh512.cn/img/20210718215438.png" alt="image-20210718215436649"></p>
+<p>加载、验证、准备、初始化和卸载这五个阶段的顺序是确定的，类型的加载过程必须按 照这种顺序按部就班地开始，而解析阶段则不一定。</p>
+<ul>
+<li><p>加载</p>
+<p>  “加载”(Loading)阶段是整个“类加载”(Class Loading)过程中的一个阶段</p>
+<ol>
+<li> 通过一个类的全限定名来获取定义此类的二进制字节流。</li>
+<li> 将这个字节流所代表的静态存储结构转化为方法区的运行时数据结构。</li>
+<li> 在内存中生成一个代表这个类的java.lang.Class对象，作为方法区这个类的各种数据的访问入口。</li>
+</ol>
+</li>
+<li><p>验证</p>
+<p>  验证是连接阶段的第一步，这一阶段的目的是确保Class文件的字节流中包含的信息符合《Java虚拟机规范》的全部约束要求，保证这些信息被当作代码运行后不会危害虚拟机自身的安全。</p>
+<ul>
+<li>  文件格式验证</li>
+<li>  元数据验证</li>
+<li>  字节码验证</li>
+<li>  符号引用验证</li>
+</ul>
+</li>
+<li><p>准备</p>
+<p>  准备阶段是正式为类中定义的变量(即静态变量，被static修饰的变量)</p>
+<ul>
+<li>  分配内存</li>
+<li>  设置类变量初始值：0值</li>
+<li>  final直接赋为设定的值</li>
+</ul>
+</li>
+<li><p>解析</p>
+<p>  解析阶段是Java虚拟机将常量池内的符号引用替换为直接引用的过程。</p>
+<ul>
+<li><p>符号引用</p>
+<p>  符号引用以一组符号来描述所引用的目标，符号可以是任何形式的字面量，只要使用时能无歧义地定位到目标即可</p>
+<p>  例如：import、String、Integer等（Integer =&gt; java.lang.Integer）</p>
+</li>
+<li><p>直接引用</p>
+<p>  直接引用是可以直接指向目标的指针、相对偏移量或者是一个能间接定位到目标的句柄。</p>
+</li>
+</ul>
+</li>
+<li><p>初始化</p>
+<p>  类的初始化阶段是类加载过程的最后一个步骤，之前介绍的几个类加载的动作里，除了在加载阶段用户应用程序可以通过自定义类加载器的方式局部参与外，其余动作都完全由Java虚拟机来主导控制。直到初始化阶段，Java虚拟机才真正开始执行类中编写的Java程序代码，将主导权移交给应用程序。</p>
+</li>
+</ul>
+<h3 id="必须立即对类进行“初始化”"><a href="#必须立即对类进行“初始化”" class="headerlink" title="必须立即对类进行“初始化”"></a>必须立即对类进行“初始化”</h3><p>（少说点，别全说出来）</p>
+<p>有六种情况必须立即对类进行“初始化”（加载、验证、准备自然需要在此之前开始）</p>
+<ol>
+<li>遇到<code>new</code>、<code>getstatic</code>、<code>putstatic</code>或<code>invokestatic</code>这四条字节码指令时，如果类型没有进行过初始化，则需要先触发其初始化阶段。能够生成这四条指令的典型Java代码场景有:<ul>
+<li>  使用new关键字实例化对象的时候。</li>
+<li>  读取或设置一个类型的静态字段(被final修饰、已在编译期把结果放入常量池的静态字段除外)的时候。</li>
+<li>  调用一个类型的静态方法的时候。</li>
+</ul>
+</li>
+<li> 使用<code>java.lang.reflect</code>包的方法对类型进行反射调用的时候，如果类型没有进行过初始化，则需要先触发其初始化。</li>
+<li> 当初始化类的时候，如果发现其父类还没有进行过初始化，则需要先触发其父类的初始化。</li>
+<li> 当虚拟机启动时，用户需要指定一个要执行的主类(包含main()方法的那个类)，虚拟机会先初始化这个主类。</li>
+<li> 当使用JDK 7新加入的动态语言支持时，如果一个<code>java.lang.invoke.MethodHandle</code>实例最后的解析结果为<code>REF_getStatic</code>、<code>REF_putStatic</code>、<code>REF_invokeStatic</code>、<code>REF_newInvokeSpecial</code>四种类型的方法句柄，并且这个方法句柄对应的类没有进行过初始化，则需要先触发其初始化。</li>
+<li> 当一个接口中定义了JDK 8新加入的默认方法(被default关键字修饰的接口方法)时，如果有这个接口的实现类发生了初始化，那该接口要在其之前被初始化。</li>
+</ol>
+<h2 id="类加载模型"><a href="#类加载模型" class="headerlink" title="类加载模型"></a>类加载模型</h2><h3 id="类加载器与类的唯一性"><a href="#类加载器与类的唯一性" class="headerlink" title="类加载器与类的唯一性"></a>类加载器与类的唯一性</h3><p>类加载器虽然只用于实现类的加载动作，但是对于任意一个类，都需要由加载它的类加载器和这个类本身共同确立其在Java虚拟机中的唯一性。</p>
+<p>通俗的说，JVM中两个类是否“相等”，<strong>首先就必须是同一个类加载器加载的</strong>，否则，即使这两个类来源于同一个Class文件，被同一个虚拟机加载，只要类加载器不同，那么这两个类必定是不相等的。</p>
+<p>这里的“相等”，包括代表类的Class对象的<code>equals()</code>方法、<code>isAssignableFrom()</code>方法、<code>isInstance()</code>方法的返回结果，也包括使用<code>instanceof</code>关键字做对象所属关系判定等情况。</p>
+<h3 id="双亲委派模型"><a href="#双亲委派模型" class="headerlink" title="双亲委派模型"></a>双亲委派模型</h3><p><a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/343563937">一定要拜读</a></p>
+<p>Java语言系统中支持以下4种类加载器：</p>
+<ul>
+<li><p>  启动类加载器</p>
+</li>
+<li><p>  扩展类加载器</p>
+</li>
+<li><p>  应用程序类加载器</p>
+</li>
+<li><p>  用户自定义类加载器</p>
+</li>
+</ul>
+<p><img src="http://img.sunyh512.cn/img/20210803100822.png" alt="类加载器双亲委派模型"></p>
+<p>各种类加载器之间的层次关系被称为类加载器的“双亲委派模型”。</p>
+<p>双亲委派模型要求除了顶层的启动类加载器外，其余的类加载器都应有自己的父类加载器。</p>
+<p>当一个类加载器收到了类加载的请求的时候，他不会直接去加载指定的类，而是把这个请求委托给自己的父加载器去加载。只有父加载器无法加载这个类的时候，才会由当前这个加载器来负责类的加载。</p>
+<p>不过这里类加载器之间的父子关系一般<strong>不是以继承(Inherit ance)的关系来实现</strong>的，而是通常<strong>使用组合(Composition)关系来复用父加载器的代码</strong>。</p>
+<p>如下为ClassLoader中父加载器的定义：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">abstract</span> <span class="class"><span class="keyword">class</span> <span class="title">ClassLoader</span> </span>&#123;</span><br><span class="line">    <span class="comment">// The parent class loader for delegation</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">final</span> ClassLoader parent;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="父加载器会无法加载某一个类"><a href="#父加载器会无法加载某一个类" class="headerlink" title="父加载器会无法加载某一个类"></a>父加载器会无法加载某一个类</h4><p>Java中提供的这四种类型的加载器，是有各自的职责的：</p>
+<ul>
+<li>  启动类加载器<code>Bootstrap ClassLoader</code>，主要负责加载Java核心类库，<code>%JRE_HOME%\lib</code>下的rt.jar、resources.jar、charsets.jar和class等。</li>
+<li>  扩展类加载器<code>Extention ClassLoader</code>，主要负责加载目录<code>%JRE_HOME%\lib\ext</code>目录下的jar包和class文件。</li>
+<li>  应用程序类加载器<code>Application ClassLoader</code>，主要负责加载当前应用的classpath下的所有类。</li>
+<li>  用户自定义加载类<code>User ClassLoader</code>， 用户自定义的类加载器,可加载指定路径的class文件。</li>
+</ul>
+<p>一个用户自定义的类，如<code>com.hollis.ClassHollis</code>是无论如何也不会被Bootstrap和Extention加载器加载的；他也会被一直委托到<code>Bootstrap ClassLoader</code>，但是因为<code>Bootstrap ClassLoader</code>不负责加载该类，那么会在由<code>Extention ClassLoader</code>尝试加载，而<code>Extention ClassLoader</code>也不负责这个类的加载，最终才会被<code>Application ClassLoader</code>加载。</p>
+<p>一个定义在<code>java.lang</code>包下的类，因为它被存放在<code>rt.jar</code>之中，所以在被加载过程汇总，会被一直委托到Bootstrap ClassLoader，最终由Bootstrap ClassLoader所加载。</p>
+<h4 id="为什么需要双亲委派"><a href="#为什么需要双亲委派" class="headerlink" title="为什么需要双亲委派"></a>为什么需要双亲委派</h4><ul>
+<li><p><strong>可以避免类的重复加载</strong></p>
+<p>  当父加载器已经加载过某一个类时，子加载器就不会再重新加载这个类。</p>
+</li>
+<li><p><strong>还保证了安全性</strong></p>
+<p>  因为Bootstrap ClassLoader在加载的时候，只会加载<code>JAVA_HOME</code>中的jar包里面的类，如<code>java.lang.Integer</code>，那么这个类是不会被随意替换的，除非有人跑到你的机器上， 破坏你的JDK。</p>
+<p>  那么，就可以避免有人自定义一个有破坏功能的java.lang.Integer被加载。这样可以有效的防止核心Java API被篡改。</p>
+</li>
+</ul>
+<h4 id="双亲委派是怎么实现的"><a href="#双亲委派是怎么实现的" class="headerlink" title="双亲委派是怎么实现的"></a>双亲委派是怎么实现的</h4><p>1、先检查类是否已经被加载过 </p>
+<p>2、若没有加载则调用父加载器的loadClass()方法进行加载 </p>
+<p>3、若父加载器为空则默认使用启动类加载器作为父加载器。</p>
+<p>4、如果父类加载失败，抛出ClassNotFoundException异常后，再调用自己的findClass()方法进行加载。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">protected</span> Class&lt;?&gt; loadClass(String name, <span class="keyword">boolean</span> resolve) <span class="keyword">throws</span> ClassNotFoundException</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">synchronized</span> (getClassLoadingLock(name)) &#123;</span><br><span class="line">        <span class="comment">// 先检查类是否已经被加载过</span></span><br><span class="line">        Class&lt;?&gt; c = findLoadedClass(name);</span><br><span class="line">        <span class="keyword">if</span> (c == <span class="keyword">null</span>) &#123;</span><br><span class="line">            <span class="keyword">long</span> t0 = System.nanoTime();</span><br><span class="line">            <span class="keyword">try</span> &#123;</span><br><span class="line">                <span class="keyword">if</span> (parent != <span class="keyword">null</span>) &#123;</span><br><span class="line">                    c = parent.loadClass(name, <span class="keyword">false</span>);</span><br><span class="line">                &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                    c = findBootstrapClassOrNull(name);</span><br><span class="line">                &#125;</span><br><span class="line">            &#125; <span class="keyword">catch</span> (ClassNotFoundException e) &#123;</span><br><span class="line">                <span class="comment">// ClassNotFoundException thrown if class not found</span></span><br><span class="line">                <span class="comment">// from the non-null parent class loader</span></span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">if</span> (c == <span class="keyword">null</span>) &#123;</span><br><span class="line">                <span class="comment">// If still not found, then invoke findClass in order</span></span><br><span class="line">                <span class="comment">// to find the class.</span></span><br><span class="line">                <span class="keyword">long</span> t1 = System.nanoTime();</span><br><span class="line">                c = findClass(name);</span><br><span class="line">                <span class="comment">// this is the defining class loader; record the stats</span></span><br><span class="line">                sun.misc.PerfCounter.getParentDelegationTime().addTime(t1 - t0);</span><br><span class="line">                sun.misc.PerfCounter.getFindClassTime().addElapsedTimeFrom(t1);</span><br><span class="line">                sun.misc.PerfCounter.getFindClasses().increment();</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">if</span> (resolve) &#123;</span><br><span class="line">            resolveClass(c);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> c;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/JVM/" rel="tag"># JVM</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2021/08/04/JVM%E4%B9%8B%E5%8F%82%E6%95%B0%E5%92%8C%E5%B7%A5%E5%85%B7/" rel="prev" title="JVM之参数和工具">
+                  <i class="fa fa-chevron-left"></i> JVM之参数和工具
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2021/08/05/Java%E5%B9%B6%E5%8F%91%E4%B9%8B%E5%9F%BA%E7%A1%80/" rel="next" title="Java并发之基础">
+                  Java并发之基础 <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Ghuilrei</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/" rel="noopener" target="_blank">NexT.Gemini</a>
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <script src="https://cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/next-boot.js"></script>
+
+  
+
+
+
+
+  
+
+
+
+
+  
+
+  <script class="next-config" data-name="enableMath" type="application/json">true</script><script class="next-config" data-name="mathjax" type="application/json">{"enable":true,"tags":"none","js":{"url":"https://cdn.jsdelivr.net/npm/mathjax@3.1.4/es5/tex-mml-chtml.js","integrity":"sha256-ncNI9OXOS5Ek4tzVYiOMmN/KKCPZ6V0Cpv2P/zHntiA="}}</script>
+<script src="/js/third-party/math/mathjax.js"></script>
+
+
+
+</body>
+</html>

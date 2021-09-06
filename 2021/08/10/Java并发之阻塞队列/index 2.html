@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.3/css/all.min.css" integrity="sha256-2H3fkXt6FEmrReK448mDVGKb3WW2ZZw35gI7vqHOE4Y=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"blog.sunyh512.cn","root":"/","images":"/images","scheme":"Gemini","version":"8.5.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":false,"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"Searching...","empty":"We didn't find any results for the search: ${query}","hits_time":"${hits} results found in ${time} ms","hits":"${hits} results found"}}</script><script src="/js/config.js"></script>
+<meta name="description" content="Java并发之阻塞队列">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Java并发之阻塞队列">
+<meta property="og:url" content="http://blog.sunyh512.cn/2021/08/10/Java%E5%B9%B6%E5%8F%91%E4%B9%8B%E9%98%BB%E5%A1%9E%E9%98%9F%E5%88%97/index.html">
+<meta property="og:site_name" content="Ghuilrei&#39;s Blog">
+<meta property="og:description" content="Java并发之阻塞队列">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2021-08-10T08:00:28.000Z">
+<meta property="article:modified_time" content="2021-08-10T08:27:57.072Z">
+<meta property="article:author" content="Ghuilrei">
+<meta property="article:tag" content="Java并发">
+<meta name="twitter:card" content="summary">
+
+
+<link rel="canonical" href="http://blog.sunyh512.cn/2021/08/10/Java%E5%B9%B6%E5%8F%91%E4%B9%8B%E9%98%BB%E5%A1%9E%E9%98%9F%E5%88%97/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"en","comments":true,"permalink":"http://blog.sunyh512.cn/2021/08/10/Java%E5%B9%B6%E5%8F%91%E4%B9%8B%E9%98%BB%E5%A1%9E%E9%98%9F%E5%88%97/","path":"2021/08/10/Java并发之阻塞队列/","title":"Java并发之阻塞队列"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>Java并发之阻塞队列 | Ghuilrei's Blog</title>
+  
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <h1 class="site-title">Ghuilrei's Blog</h1>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu">
+        <li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a></li>
+        <li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a></li>
+        <li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a></li>
+        <li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a></li>
+        <li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a></li>
+        <li class="menu-item menu-item-schedule"><a href="/schedule/" rel="section"><i class="fa fa-calendar fa-fw"></i>Schedule</a></li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%98%BB%E5%A1%9E%E9%98%9F%E5%88%97"><span class="nav-number">1.</span> <span class="nav-text">阻塞队列</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#ArrayBlockingQueue"><span class="nav-number">2.</span> <span class="nav-text">ArrayBlockingQueue</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#LinkedBlockingQueue"><span class="nav-number">3.</span> <span class="nav-text">LinkedBlockingQueue</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#PriorityBlockingQueue"><span class="nav-number">4.</span> <span class="nav-text">PriorityBlockingQueue</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#DelayQueue"><span class="nav-number">5.</span> <span class="nav-text">DelayQueue</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#SynchronousQueue"><span class="nav-number">6.</span> <span class="nav-text">SynchronousQueue</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#LinkedTransferQueue"><span class="nav-number">7.</span> <span class="nav-text">LinkedTransferQueue</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#LinkedBlockingDeque"><span class="nav-number">8.</span> <span class="nav-text">LinkedBlockingDeque</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-overview">
+            <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Ghuilrei"
+      src="http://img.sunyh512.cn/img/20210803143027.jpeg">
+  <p class="site-author-name" itemprop="name">Ghuilrei</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">38</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">16</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">33</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+          </div>
+        </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+  <div class="back-to-top" role="button" aria-label="Back to top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://blog.sunyh512.cn/2021/08/10/Java%E5%B9%B6%E5%8F%91%E4%B9%8B%E9%98%BB%E5%A1%9E%E9%98%9F%E5%88%97/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="http://img.sunyh512.cn/img/20210803143027.jpeg">
+      <meta itemprop="name" content="Ghuilrei">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Ghuilrei's Blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Java并发之阻塞队列
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">Posted on</span>
+      
+
+      <time title="Created: 2021-08-10 16:00:28 / Modified: 16:27:57" itemprop="dateCreated datePublished" datetime="2021-08-10T16:00:28+08:00">2021-08-10</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">In</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/Java%E4%BD%93%E7%B3%BB/" itemprop="url" rel="index"><span itemprop="name">Java体系</span></a>
+        </span>
+          , 
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/Java%E4%BD%93%E7%B3%BB/%E5%B9%B6%E5%8F%91/" itemprop="url" rel="index"><span itemprop="name">并发</span></a>
+        </span>
+    </span>
+
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <p>Java并发之阻塞队列</p>
+<span id="more"></span>
+
+<h2 id="阻塞队列"><a href="#阻塞队列" class="headerlink" title="阻塞队列"></a>阻塞队列</h2><table>
+<thead>
+<tr>
+<th align="left">队列名称</th>
+<th align="center">描述</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left">ArrayBlockingQueue</td>
+<td align="center">一个由数组结构组成的有界阻塞队列</td>
+</tr>
+<tr>
+<td align="left">LinkedBlockingQueue</td>
+<td align="center">一个由链表结构组成的有界阻塞队列</td>
+</tr>
+<tr>
+<td align="left">PriorityBlockingQueue</td>
+<td align="center">一个支持优先级排序的无界阻塞队列</td>
+</tr>
+<tr>
+<td align="left">DelayQueue</td>
+<td align="center">一个使用优先级队列实现的无界阻塞队列</td>
+</tr>
+<tr>
+<td align="left">SynchronousQueue</td>
+<td align="center">一个不存储元素的阻塞队列</td>
+</tr>
+<tr>
+<td align="left">LinkedTransferQueue</td>
+<td align="center">一个由链表结构组成的无界阻塞队列</td>
+</tr>
+<tr>
+<td align="left">LinkedBlockingDeque</td>
+<td align="center">一个由链表结构组成的双向阻塞队列</td>
+</tr>
+</tbody></table>
+<h2 id="ArrayBlockingQueue"><a href="#ArrayBlockingQueue" class="headerlink" title="ArrayBlockingQueue"></a>ArrayBlockingQueue</h2><p>ArrayBlockingQueue是一个用数组实现的有界阻塞队列。</p>
+<p>此队列按照先进先出(FIFO)的原则对元素进行排序。</p>
+<p>默认情况下不保证线程公平的访问队列</p>
+<ul>
+<li>  公平访问队列是指阻塞的线程，可以按照阻塞的先后顺序访问队列，即先阻塞线程先访问队列。</li>
+<li>  非公平性是对先等待的线程是非公平的，当队列可用时，阻塞的线程都可以争夺访问队列的资格，有可能先阻塞的线程最后才访问队列。</li>
+</ul>
+<p>为了保证公平性，通常会降低吞吐量。</p>
+<p>访问者的公平性是使用可重入锁实现的。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="title">ArrayBlockingQueue</span><span class="params">(<span class="keyword">int</span> capacity, <span class="keyword">boolean</span> fair)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (capacity &lt;= <span class="number">0</span>)</span><br><span class="line">        <span class="keyword">throw</span> <span class="keyword">new</span> IllegalArgumentException();</span><br><span class="line">    <span class="keyword">this</span>.items = <span class="keyword">new</span> Object[capacity];</span><br><span class="line">    lock = <span class="keyword">new</span> ReentrantLock(fair);</span><br><span class="line">    notEmpty = lock.newCondition();</span><br><span class="line">    notFull = lock.newCondition();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="LinkedBlockingQueue"><a href="#LinkedBlockingQueue" class="headerlink" title="LinkedBlockingQueue"></a>LinkedBlockingQueue</h2><p>LinkedBlockingQueue是一个用链表实现的有界阻塞队列。</p>
+<p>此队列的默认和最大长度为<code>Integer.MAX_VALUE</code>。</p>
+<p>此队列按照先进先出的原则对元素进行排序。</p>
+<h2 id="PriorityBlockingQueue"><a href="#PriorityBlockingQueue" class="headerlink" title="PriorityBlockingQueue"></a>PriorityBlockingQueue</h2><p>PriorityBlockingQueue是一个支持优先级的无界阻塞队列。</p>
+<p>默认情况下元素采取自然顺序升序排列。</p>
+<p>也可以自定义类实现<code>compareTo()</code>方法来指定元素排序规则，或者初始化<code>PriorityBlockingQueue</code>时，指定构造参数<code>Comparator</code>来对元素进行排序。</p>
+<p>需要注意的是<strong>不能保证同优先级元素的顺序</strong>。</p>
+<h2 id="DelayQueue"><a href="#DelayQueue" class="headerlink" title="DelayQueue"></a>DelayQueue</h2><p>DelayQueue是一个支持延时获取元素的无界阻塞队列。</p>
+<p>队列使用PriorityQueue来实现。</p>
+<p>队列中的元素必须实现<code>Delayed接口</code>，在创建元素时可以指定多久才能从队列中获取当前元素。 </p>
+<p>只有在延迟期满时才能从队列中提取元素。</p>
+<p>DelayQueue的应用场景：</p>
+<ul>
+<li><p>缓存系统的设计</p>
+<p>  可以用DelayQueue保存缓存元素的有效期，使用一个线程循环查询 DelayQueue，一旦能从DelayQueue中获取元素时，表示缓存有效期到了。</p>
+</li>
+<li><p>定时任务调度</p>
+<p>  使用DelayQueue保存当天将会执行的任务和执行时间，一旦从 DelayQueue中获取到任务就开始执行。</p>
+<p>  比如TimerQueue就是使用DelayQueue实现的。</p>
+</li>
+</ul>
+<p>实现Delayed接口：</p>
+<ol>
+<li> 在对象创建的时候，初始化基本数据</li>
+<li> 实现getDelay方法</li>
+<li> 实现compareTo方法来指定元素的顺序</li>
+</ol>
+<p>实现延时阻塞队列：当消费者从队列里获取元素时，如果元素没有达到延时时间，就阻塞当前线程。</p>
+<h2 id="SynchronousQueue"><a href="#SynchronousQueue" class="headerlink" title="SynchronousQueue"></a>SynchronousQueue</h2><p>SynchronousQueue是一个不存储元素的阻塞队列。</p>
+<p>每一个put操作必须等待一个take操作， 否则不能继续添加元素。</p>
+<p>它支持公平访问队列。默认情况下线程采用非公平性策略访问队列。</p>
+<p>使用以下构造方法 可以创建公平性访问的SynchronousQueue，如果设置为true，则等待的线程会采用先进先出的顺序访问队列。</p>
+<h2 id="LinkedTransferQueue"><a href="#LinkedTransferQueue" class="headerlink" title="LinkedTransferQueue"></a>LinkedTransferQueue</h2><p>LinkedTransferQueue是一个由链表结构组成的无界阻塞TransferQueue队列。</p>
+<p>相对于其他阻塞队列，LinkedTransferQueue多了tryTransfer和transfer方法。</p>
+<ul>
+<li><p>transfer方法</p>
+<p>  如果当前有消费者正在等待接收元素(消费者使用take()方法或带时间限制的poll()方法 时)，</p>
+<p>  transfer方法可以把生产者传入的元素立刻transfer(传输)给消费者。</p>
+<p>  如果没有消费者在等待接收元素，</p>
+<p>  transfer方法会将元素存放在队列的tail节点，并等到该元素被消费者消费了才返回。</p>
+</li>
+<li><p>tryTransfer方法</p>
+<p>  tryTransfer方法是用来试探生产者传入的元素是否能直接传给消费者。</p>
+<p>  如果没有消费者等待接收元素，则返回false。</p>
+<p>  和transfer方法的区别：</p>
+<ul>
+<li>  tryTransfer方法无论消费者是否接收，方法立即返回，</li>
+<li>  transfer方法是必须等到消费者消费了才返回。</li>
+</ul>
+</li>
+</ul>
+<h2 id="LinkedBlockingDeque"><a href="#LinkedBlockingDeque" class="headerlink" title="LinkedBlockingDeque"></a>LinkedBlockingDeque</h2><p>LinkedBlockingDeque是一个由链表结构组成的双向阻塞队列。</p>
+<p>所谓双向队列指的是可以 从队列的两端插入和移出元素。</p>
+<p>双向队列因为多了一个操作队列的入口，在多线程同时入队时，也就减少了一半的竞争。</p>
+<p>相比其他的阻塞队列，LinkedBlockingDeque多了addFirst、 addLast、offerFirst、offerLast、peekFirst和peekLast等方法，</p>
+<p>以First单词结尾的方法，表示插入、 获取(peek)或移除双端队列的第一个元素。</p>
+<p>以Last单词结尾的方法，表示插入、获取或移除双 端队列的最后一个元素。</p>
+<p>另外，插入方法add等同于addLast，移除方法remove等效于 removeFirst。</p>
+<p>但是take方法却等同于takeFirst，<del>不知道是不是JDK的bug</del>，使用时还是用带有First和Last后缀的方法更清楚。</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Java%E5%B9%B6%E5%8F%91/" rel="tag"># Java并发</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2021/08/10/Java%E5%B9%B6%E5%8F%91%E4%B9%8B%E5%B9%B6%E5%8F%91%E5%AE%B9%E5%99%A8/" rel="prev" title="Java并发之并发容器">
+                  <i class="fa fa-chevron-left"></i> Java并发之并发容器
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2021/08/10/BIO%E3%80%81NIO%E4%B8%8EAIO/" rel="next" title="BIO、NIO与AIO">
+                  BIO、NIO与AIO <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Ghuilrei</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/" rel="noopener" target="_blank">NexT.Gemini</a>
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <script src="https://cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/next-boot.js"></script>
+
+  
+
+
+
+
+  
+
+
+
+
+  
+
+  <script class="next-config" data-name="enableMath" type="application/json">true</script><script class="next-config" data-name="mathjax" type="application/json">{"enable":true,"tags":"none","js":{"url":"https://cdn.jsdelivr.net/npm/mathjax@3.1.4/es5/tex-mml-chtml.js","integrity":"sha256-ncNI9OXOS5Ek4tzVYiOMmN/KKCPZ6V0Cpv2P/zHntiA="}}</script>
+<script src="/js/third-party/math/mathjax.js"></script>
+
+
+
+</body>
+</html>

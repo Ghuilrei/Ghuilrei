@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.3/css/all.min.css" integrity="sha256-2H3fkXt6FEmrReK448mDVGKb3WW2ZZw35gI7vqHOE4Y=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"blog.sunyh512.cn","root":"/","images":"/images","scheme":"Gemini","version":"8.5.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":false,"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"Searching...","empty":"We didn't find any results for the search: ${query}","hits_time":"${hits} results found in ${time} ms","hits":"${hits} results found"}}</script><script src="/js/config.js"></script>
+<meta name="description" content="常用的消息队列有RabbitMQ、RocketMQ、Kafka。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="MQ之常用的消息队列">
+<meta property="og:url" content="http://blog.sunyh512.cn/2021/08/30/MQ%E4%B9%8B%E5%B8%B8%E7%94%A8%E7%9A%84%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/index.html">
+<meta property="og:site_name" content="Ghuilrei&#39;s Blog">
+<meta property="og:description" content="常用的消息队列有RabbitMQ、RocketMQ、Kafka。">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="http://img.sunyh512.cn/img/20210830170322.png">
+<meta property="og:image" content="http://img.sunyh512.cn/img/20210831071753.jpg">
+<meta property="og:image" content="http://img.sunyh512.cn/img/20210831071750.jpg">
+<meta property="og:image" content="https://i.loli.net/2021/08/02/87UaEMQyWI2GVmX.jpg">
+<meta property="og:image" content="https://i.loli.net/2021/08/02/cEQfNtWsoD1JHCU.jpg">
+<meta property="og:image" content="https://my-blog-to-use.oss-cn-beijing.aliyuncs.com/2019-11/16ef3850c808d707.jpg">
+<meta property="og:image" content="https://my-blog-to-use.oss-cn-beijing.aliyuncs.com/2019-11/16ef3857fefaa079.jpg">
+<meta property="og:image" content="https://my-blog-to-use.oss-cn-beijing.aliyuncs.com/2019-11/16ef38600cdb6d4b.jpg">
+<meta property="article:published_time" content="2021-08-30T08:22:55.000Z">
+<meta property="article:modified_time" content="2021-08-31T00:39:48.646Z">
+<meta property="article:author" content="Ghuilrei">
+<meta property="article:tag" content="MessageQueue">
+<meta property="article:tag" content="RabbitMQ">
+<meta property="article:tag" content="RocketMQ">
+<meta property="article:tag" content="Kafka">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://img.sunyh512.cn/img/20210830170322.png">
+
+
+<link rel="canonical" href="http://blog.sunyh512.cn/2021/08/30/MQ%E4%B9%8B%E5%B8%B8%E7%94%A8%E7%9A%84%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"en","comments":true,"permalink":"http://blog.sunyh512.cn/2021/08/30/MQ%E4%B9%8B%E5%B8%B8%E7%94%A8%E7%9A%84%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/","path":"2021/08/30/MQ之常用的消息队列/","title":"MQ之常用的消息队列"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>MQ之常用的消息队列 | Ghuilrei's Blog</title>
+  
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <h1 class="site-title">Ghuilrei's Blog</h1>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu">
+        <li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a></li>
+        <li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a></li>
+        <li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a></li>
+        <li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a></li>
+        <li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a></li>
+        <li class="menu-item menu-item-schedule"><a href="/schedule/" rel="section"><i class="fa fa-calendar fa-fw"></i>Schedule</a></li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#RabbitMQ"><span class="nav-number">1.</span> <span class="nav-text">RabbitMQ</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%89%B9%E7%82%B9"><span class="nav-number">1.1.</span> <span class="nav-text">特点</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%9E%B6%E6%9E%84"><span class="nav-number">1.2.</span> <span class="nav-text">架构</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%B6%88%E6%81%AF%EF%BC%9A"><span class="nav-number">1.2.1.</span> <span class="nav-text">消息：</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Exchange%EF%BC%88%E4%BA%A4%E6%8D%A2%E5%99%A8%EF%BC%89"><span class="nav-number">1.2.2.</span> <span class="nav-text">Exchange（交换器）</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Queue-%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97"><span class="nav-number">1.2.3.</span> <span class="nav-text">Queue(消息队列)</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Virtual-Host%EF%BC%88%E8%99%9A%E6%8B%9F%E4%B8%BB%E6%9C%BA%EF%BC%89"><span class="nav-number">1.2.4.</span> <span class="nav-text">Virtual Host（虚拟主机）</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Broker%EF%BC%88%E6%B6%88%E6%81%AF%E4%B8%AD%E9%97%B4%E4%BB%B6%E7%9A%84%E6%9C%8D%E5%8A%A1%E8%8A%82%E7%82%B9%EF%BC%89"><span class="nav-number">1.2.5.</span> <span class="nav-text">Broker（消息中间件的服务节点）</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Exchange-Types-%E4%BA%A4%E6%8D%A2%E5%99%A8%E7%B1%BB%E5%9E%8B"><span class="nav-number">1.3.</span> <span class="nav-text">Exchange Types(交换器类型)</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#fanout"><span class="nav-number">1.3.1.</span> <span class="nav-text">fanout</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#direct"><span class="nav-number">1.3.2.</span> <span class="nav-text">direct</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#topic"><span class="nav-number">1.3.3.</span> <span class="nav-text">topic</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#headers-%E4%B8%8D%E6%8E%A8%E8%8D%90"><span class="nav-number">1.3.4.</span> <span class="nav-text">headers(不推荐)</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#RocketMQ"><span class="nav-number">2.</span> <span class="nav-text">RocketMQ</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88Rocket%E4%B8%8D%E7%94%A8%E9%98%9F%E5%88%97%E6%A8%A1%E5%9E%8B%EF%BC%9F"><span class="nav-number">2.1.</span> <span class="nav-text">为什么Rocket不用队列模型？</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#RocketMQ%E4%B8%AD%E7%9A%84%E6%B6%88%E6%81%AF%E6%A8%A1%E5%9E%8B"><span class="nav-number">2.2.</span> <span class="nav-text">RocketMQ中的消息模型</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%B8%BB%E9%A2%98%E6%A8%A1%E5%9E%8B"><span class="nav-number">2.3.</span> <span class="nav-text">主题模型</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#RocketMQ%E5%AE%9E%E7%8E%B0%E7%9A%84%E4%B8%BB%E9%A2%98%E6%A8%A1%E5%9E%8B"><span class="nav-number">2.4.</span> <span class="nav-text">RocketMQ实现的主题模型</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Kafka"><span class="nav-number">3.</span> <span class="nav-text">Kafka</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-overview">
+            <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Ghuilrei"
+      src="http://img.sunyh512.cn/img/20210803143027.jpeg">
+  <p class="site-author-name" itemprop="name">Ghuilrei</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">53</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">22</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">43</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+          </div>
+        </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+  <div class="back-to-top" role="button" aria-label="Back to top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://blog.sunyh512.cn/2021/08/30/MQ%E4%B9%8B%E5%B8%B8%E7%94%A8%E7%9A%84%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="http://img.sunyh512.cn/img/20210803143027.jpeg">
+      <meta itemprop="name" content="Ghuilrei">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Ghuilrei's Blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          MQ之常用的消息队列
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">Posted on</span>
+
+      <time title="Created: 2021-08-30 16:22:55" itemprop="dateCreated datePublished" datetime="2021-08-30T16:22:55+08:00">2021-08-30</time>
+    </span>
+      <span class="post-meta-item">
+        <span class="post-meta-item-icon">
+          <i class="far fa-calendar-check"></i>
+        </span>
+        <span class="post-meta-item-text">Edited on</span>
+        <time title="Modified: 2021-08-31 08:39:48" itemprop="dateModified" datetime="2021-08-31T08:39:48+08:00">2021-08-31</time>
+      </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">In</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/MessageQueue/" itemprop="url" rel="index"><span itemprop="name">MessageQueue</span></a>
+        </span>
+    </span>
+
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <p>常用的消息队列有RabbitMQ、RocketMQ、Kafka。</p>
+<span id="more"></span>
+
+<p><a href="#%E4%B8%BB%E9%A2%98%E6%A8%A1%E5%9E%8B">看到这里了</a></p>
+<h2 id="RabbitMQ"><a href="#RabbitMQ" class="headerlink" title="RabbitMQ"></a>RabbitMQ</h2><p>RabbitMQ 整体上是一个生产者与消费者模型，主要负责接收、存储和转发消息。</p>
+<p>从计算机术语层面来说，RabbitMQ 模型更像是一种交换机模型。</p>
+<p>用于在分布式系统中存储转发消息。</p>
+<h3 id="特点"><a href="#特点" class="headerlink" title="特点"></a>特点</h3><ul>
+<li><p><strong>可靠性：</strong> </p>
+<p>  RabbitMQ使用一些机制来保证消息的可靠性，如持久化、传输确认及发布确认等。</p>
+</li>
+<li><p><strong>灵活的路由：</strong> </p>
+<p>  在消息进入队列之前，通过交换器来路由消息。对于典型的路由功能，RabbitMQ 己经提供了一些内置的交换器来实现。</p>
+<p>  针对更复杂的路由功能，可以将多个交换器绑定在一起，也可以通过插件机制来实现自己的交换器。</p>
+</li>
+<li><p><strong>扩展性：</strong> </p>
+<p>  多个RabbitMQ节点可以组成一个集群，也可以根据实际业务情况动态地扩展集群中节点。</p>
+</li>
+<li><p><strong>高可用性：</strong> </p>
+<p>  队列可以在集群中的机器上设置镜像，使得在部分节点出现问题的情况下队列仍然可用。</p>
+</li>
+<li><p><strong>支持多种协议：</strong> </p>
+<p>  RabbitMQ 除了原生支持 AMQP 协议，还支持 STOMP、MQTT 等多种消息中间件协议。</p>
+</li>
+<li><p><strong>多语言客户端：</strong> </p>
+<p>  RabbitMQ几乎支持所有常用语言，比如 Java、Python、Ruby、PHP、C#、JavaScript等。</p>
+</li>
+<li><p><strong>易用的管理界面：</strong> </p>
+<p>  RabbitMQ提供了一个易用的用户界面，使得用户可以监控和管理消息、集群中的节点等。在安装 RabbitMQ 的时候会介绍到，安装好 RabbitMQ 就自带管理界面。</p>
+</li>
+<li><p><strong>插件机制：</strong> </p>
+<p>  RabbitMQ 提供了许多插件，以实现从多方面进行扩展，当然也可以编写自己的插件。感觉这个有点类似 Dubbo 的 SPI机制。</p>
+</li>
+</ul>
+<h3 id="架构"><a href="#架构" class="headerlink" title="架构"></a>架构</h3><p><img src="http://img.sunyh512.cn/img/20210830170322.png" alt="img"></p>
+<h4 id="消息："><a href="#消息：" class="headerlink" title="消息："></a>消息：</h4><p>消息一般由 2 部分组成：<strong>消息头</strong>（或者说是标签 Label）和 <strong>消息体</strong>。</p>
+<p>消息体也可以称为 payLoad ,消息体是不透明的，而消息头则由一系列的可选属性组成，这些属性包括：</p>
+<ul>
+<li>  <code>routing-key</code>（路由键）</li>
+<li>  <code>priority</code>（相对于其他消息的优先权）</li>
+<li>  <code>delivery-mode</code>（指出该消息可能需要持久性存储）</li>
+<li>  等</li>
+</ul>
+<p>生产者把消息交由 RabbitMQ 后，RabbitMQ 会根据消息头把消息发送给对应的Consumer(消费者)。</p>
+<h4 id="Exchange（交换器）"><a href="#Exchange（交换器）" class="headerlink" title="Exchange（交换器）"></a>Exchange（交换器）</h4><p>在 RabbitMQ 中，消息并不是直接被投递到Queue中的，中间还必须经过Exchange这一层，Exchange会把我们的消息分配到对应的Queue中。</p>
+<p>Exchange用来接收生产者发送的消息并将这些消息路由给服务器中的队列中，如果路由不到，或许会返回给Producer，或许会被直接丢弃掉 。这里可以将RabbitMQ中的交换器看作一个简单的实体。</p>
+<p>RabbitMQ的Exchange有4种类型，不同的类型对应着不同的路由策略：</p>
+<ul>
+<li>  direct(默认)</li>
+<li>  fanout</li>
+<li>  topic</li>
+<li>  headers</li>
+</ul>
+<p>生产者将消息发给交换器的时候，一般会指定一个 RoutingKey，用来指定这个消息的路由规则，而这个 RoutingKey 需要与交换器类型和 BindingKey 联合使用才能最终生效。</p>
+<p>RabbitMQ 中通过 Binding（绑定）将 Exchange 与 Queue 关联起来，在绑定的时候一般会指定一个 BindingKey，这样 RabbitMQ 就知道如何正确将消息路由到队列了。</p>
+<p>可以将交换器理解成一个由绑定构成的路由表。Exchange 和 Queue 的绑定可以是多对多的关系。</p>
+<p>生产者将消息发送给交换器时，需要一个RoutingKey。当 BindingKey 和 RoutingKey 相匹配时，消息会被路由到对应的队列中。在绑定多个队列到同一个交换器的时候，这些绑定允许使用相同的 BindingKey。</p>
+<p>BindingKey 并不是在所有的情况下都生效，它依赖于交换器类型，比如fanout类型的交换器就会无视，而是将消息路由到所有绑定到该交换器的队列中。</p>
+<p><em>（⚠️注意：这一块要分清 <code>RoutingKey</code> 和 <code>BindingKey</code> ，不要弄混了）</em></p>
+<h4 id="Queue-消息队列"><a href="#Queue-消息队列" class="headerlink" title="Queue(消息队列)"></a>Queue(消息队列)</h4><p>Queue(消息队列) 用来保存消息直到发送给消费者。</p>
+<p>它是消息的容器，也是消息的终点。一个消息可投入一个或多个队列。消息一直在队列里面，等待消费者连接到这个队列将其取走。</p>
+<p>RabbitMQ 中消息只能存储在队列中，这一点和 Kafka 相反。</p>
+<blockquote>
+<p>  Kafka 将消息存储在 topic（主题） 这个逻辑层面，而相对应的队列逻辑只是topic实际存储文件中的位移标识。 </p>
+<p>  RabbitMQ 的生产者生产消息并最终投递到队列中，消费者可以从队列中获取消息并消费。</p>
+</blockquote>
+<p>多个消费者可以订阅同一个队列，这时队列中的消息会被平均分摊（Round-Robin，即轮询）给多个消费者进行处理，而不是每个消费者都收到所有的消息并处理，这样避免的消息被重复消费。</p>
+<p><span style="color:green">RabbitMQ不支持队列层面的广播消费。（啥意思？）</span></p>
+<h4 id="Virtual-Host（虚拟主机）"><a href="#Virtual-Host（虚拟主机）" class="headerlink" title="Virtual Host（虚拟主机）"></a>Virtual Host（虚拟主机）</h4><p>虚拟主机表示一批交换器、消息队列和相关对象。虚拟主机是共享相同的身份认证和加密环境的独立服务器域。每个 vhost 本质上就是一个 mini 版的 RabbitMQ 服务器，拥有自己的队列、交换器、绑定和权限机制。vhost 是 AMQP 概念的基础，必须在连接时指定，RabbitMQ 默认的 vhost 是 / 。</p>
+<h4 id="Broker（消息中间件的服务节点）"><a href="#Broker（消息中间件的服务节点）" class="headerlink" title="Broker（消息中间件的服务节点）"></a>Broker（消息中间件的服务节点）</h4><p>对于 RabbitMQ 来说，一个 RabbitMQ Broker 可以简单地看作一个 RabbitMQ 服务节点，或者RabbitMQ服务实例。</p>
+<p>大多数情况下也可以将一个 RabbitMQ Broker 看作一台 RabbitMQ 服务器。</p>
+<h3 id="Exchange-Types-交换器类型"><a href="#Exchange-Types-交换器类型" class="headerlink" title="Exchange Types(交换器类型)"></a>Exchange Types(交换器类型)</h3><p>RabbitMQ 常用的 Exchange Type 有 <strong>fanout</strong>、<strong>direct</strong>、<strong>topic</strong>、<strong>headers</strong> 这四种（AMQP规范里还提到两种 Exchange Type，分别为 system 与 自定义，这里不予以描述）。</p>
+<h4 id="fanout"><a href="#fanout" class="headerlink" title="fanout"></a>fanout</h4><p>fanout 类型的Exchange路由规则非常简单，它会把所有发送到该Exchange的消息路由到所有与它绑定的Queue中，不需要做任何判断操作，所以 fanout 类型是所有的交换机类型里面速度最快的。fanout 类型常用来广播消息。</p>
+<h4 id="direct"><a href="#direct" class="headerlink" title="direct"></a>direct</h4><p>direct 类型的Exchange路由规则也很简单，它会把消息路由到那些 Bindingkey 与 RoutingKey 完全匹配的 Queue 中。 </p>
+<p><img src="http://img.sunyh512.cn/img/20210831071753.jpg" alt="direct 类型交换器"></p>
+<p>以上图为例：</p>
+<p>如果发送消息的时候设置路由键为“warning”,那么消息会路由到 Queue1 和 Queue2。</p>
+<p>如果在发送消息的时候设置路由键为”Info”或者”debug”，消息只会路由到Queue2。</p>
+<p>如果以其他的路由键发送消息，则消息不会路由到这两个队列中。</p>
+<p>direct 类型常用在处理有优先级的任务，根据任务的优先级把消息发送到对应的队列，这样可以指派更多的资源去处理高优先级的队列。</p>
+<h4 id="topic"><a href="#topic" class="headerlink" title="topic"></a>topic</h4><p>前面讲到direct类型的交换器路由规则是完全匹配 BindingKey 和 RoutingKey，但是这种严格的匹配方式在很多情况下不能满足实际业务的需求。</p>
+<p>topic类型的交换器在匹配规则上进行了扩展，它与 direct 类型的交换器相似，也是将消息路由到 BindingKey 和 RoutingKey 相匹配的队列中，但这里的匹配规则有些不同，它约定：</p>
+<ul>
+<li>RoutingKey 为一个点号<code>．</code>分隔的字符串（被点号<code>．</code>分隔开的每一段独立的字符串称为一个单词），如 “com.rabbitmq.client”、“java.util.concurrent”、“com.hidden.client”;</li>
+<li>BindingKey 和 RoutingKey 一样也是点号<code>．</code>分隔的字符串；</li>
+<li>BindingKey 中可以存在两种特殊字符串<code>*</code>和<code>#</code>，用于做模糊匹配：<ul>
+<li><code>*</code>用于匹配一个单词</li>
+<li><code>#</code>用于匹配多个单词(可以是零个)。</li>
+</ul>
+</li>
+</ul>
+<p><img src="http://img.sunyh512.cn/img/20210831071750.jpg" alt="topic 类型交换器"></p>
+<p>以上图为例：</p>
+<ul>
+<li>路由键为 “com.rabbitmq.client” 的消息会同时路由到 Queuel 和 Queue2;</li>
+<li>路由键为 “com.hidden.client” 的消息只会路由到 Queue2 中；</li>
+<li>路由键为 “com.hidden.demo” 的消息只会路由到 Queue2 中；</li>
+<li>路由键为 “java.rabbitmq.demo” 的消息只会路由到Queuel中；</li>
+<li>路由键为 “java.util.concurrent” 的消息将会被丢弃或者返回给生产者（需要设置 mandatory 参数），因为它没有匹配任何路由键。</li>
+</ul>
+<h4 id="headers-不推荐"><a href="#headers-不推荐" class="headerlink" title="headers(不推荐)"></a>headers(不推荐)</h4><p>headers 类型的交换器不依赖于路由键的匹配规则来路由消息，而是根据发送的消息内容中的 headers 属性进行匹配。</p>
+<p>在绑定队列和交换器时制定一组键值对，当发送消息到交换器时，RabbitMQ会获取到该消息的 headers（也是一个键值对的形式）对比其中的键值对是否完全匹配队列和交换器绑定时指定的键值对，如果完全匹配则消息会路由到该队列，否则不会路由到该队列。</p>
+<p>headers 类型的交换器性能会很差，而且也不实用，基本上不会看到它的存在。</p>
+<h2 id="RocketMQ"><a href="#RocketMQ" class="headerlink" title="RocketMQ"></a>RocketMQ</h2><p>RocketMQ是一个 主题模型 的消息中间件。</p>
+<p>具有 高性能、高可靠、高实时、分布式 的特点。</p>
+<p>它是一个采用 Java 语言开发的分布式的消息系统。</p>
+<h3 id="为什么Rocket不用队列模型？"><a href="#为什么Rocket不用队列模型？" class="headerlink" title="为什么Rocket不用队列模型？"></a>为什么Rocket不用队列模型？</h3><p>答：<strong>占用资源</strong>、<strong>违背解耦原则</strong>。</p>
+<p>可以让 <code>Producer</code> 生产消息放入多个队列中，然后每个队列去对应每一个消费者。</p>
+<p>的确可以解决“<strong>广播</strong>”的需求，但创建多个队列并且复制多份消息是会很影响资源和性能的。</p>
+<p>而且，这样子就会导致生产者需要知道具体消费者个数然后去复制对应数量的消息队列，这就违背我们消息中间件的 <strong>解耦</strong> 这一原则。</p>
+<h3 id="RocketMQ中的消息模型"><a href="#RocketMQ中的消息模型" class="headerlink" title="RocketMQ中的消息模型"></a>RocketMQ中的消息模型</h3><p><code>RockerMQ</code> 中的消息模型就是按照 <strong>主题模型</strong>（又名<strong>发布订阅模型</strong> ） 所实现的。</p>
+<h3 id="主题模型"><a href="#主题模型" class="headerlink" title="主题模型"></a>主题模型</h3><p>在主题模型中，消息的生产者称为 <strong>发布者(Publisher)</strong> ，消息的消费者称为 <strong>订阅者(Subscriber)</strong> ，存放消息的容器称为 <strong>主题(Topic)</strong> 。</p>
+<p>其中，发布者将消息发送到指定主题中，订阅者需要 <strong>提前订阅主题</strong> 才能接受特定主题的消息。</p>
+<p><img src="https://i.loli.net/2021/08/02/87UaEMQyWI2GVmX.jpg"></p>
+<p><span style="color:blue">看到这里了</span></p>
+<h3 id="RocketMQ实现的主题模型"><a href="#RocketMQ实现的主题模型" class="headerlink" title="RocketMQ实现的主题模型"></a>RocketMQ实现的主题模型</h3><p>对于主题模型的实现来说每个消息中间件的底层设计都是不一样的，就比如 <code>Kafka</code> 中的 <strong>分区</strong> ，<code>RocketMQ</code> 中的 <strong>队列</strong> ，<code>RabbitMQ</code> 中的 <code>Exchange</code> 。</p>
+<p>我们可以理解为 <strong>主题模型/发布订阅模型</strong> 就是一个标准，那些中间件只不过照着这个标准去实现而已。</p>
+<p><img src="https://i.loli.net/2021/08/02/cEQfNtWsoD1JHCU.jpg"></p>
+<p>图中<code>Producer Group</code> 、<code>Topic</code> 、<code>Consumer Group</code>  三个角色的解释：</p>
+<ul>
+<li><code>Producer Group</code> 生产者组： 代表某一类的生产者，比如我们有多个秒杀系统作为生产者，这多个合在一起就是一个 <code>Producer Group</code> 生产者组，它们一般生产相同的消息。</li>
+<li><code>Consumer Group</code> 消费者组： 代表某一类的消费者，比如我们有多个短信系统作为消费者，这多个合在一起就是一个 <code>Consumer Group</code> 消费者组，它们一般消费相同的消息。</li>
+<li><code>Topic</code> 主题： 代表一类消息，比如订单消息，物流消息等等。</li>
+</ul>
+<p>你可以看到图中生产者组中的生产者会向主题发送消息，而 <strong>主题中存在多个队列</strong>，生产者每次生产消息之后是指定主题中的某个队列发送消息的。</p>
+<p>每个主题中都有多个队列(这里还不涉及到 <code>Broker</code>)，集群消费模式下，一个消费者集群多台机器共同消费一个 <code>topic</code> 的多个队列，<strong>一个队列只会被一个消费者消费</strong>。如果某个消费者挂掉，分组内其它消费者会接替挂掉的消费者继续消费。就像上图中 <code>Consumer1</code> 和 <code>Consumer2</code> 分别对应着两个队列，而 <code>Consuer3</code> 是没有队列对应的，所以一般来讲要控制 <strong>消费者组中的消费者个数和主题中队列个数相同</strong> 。</p>
+<p>当然也可以消费者个数小于队列个数，只不过不太建议。如下图。</p>
+<p><img src="https://my-blog-to-use.oss-cn-beijing.aliyuncs.com/2019-11/16ef3850c808d707.jpg"></p>
+<p><strong>每个消费组在每个队列上维护一个消费位置</strong> ，为什么呢？</p>
+<p>因为我们刚刚画的仅仅是一个消费者组，我们知道在发布订阅模式中一般会涉及到多个消费者组，而每个消费者组在每个队列中的消费位置都是不同的。如果此时有多个消费者组，那么消息被一个消费者组消费完之后是不会删除的(因为其它消费者组也需要呀)，它仅仅是为每个消费者组维护一个 <strong>消费位移(offset)</strong> ，每次消费者组消费完会返回一个成功的响应，然后队列再把维护的消费位移加一，这样就不会出现刚刚消费过的消息再一次被消费了。</p>
+<p><img src="https://my-blog-to-use.oss-cn-beijing.aliyuncs.com/2019-11/16ef3857fefaa079.jpg"></p>
+<p>可能你还有一个问题，<strong>为什么一个主题中需要维护多个队列</strong> ？</p>
+<p>答案是 <strong>提高并发能力</strong> 。的确，每个主题中只存在一个队列也是可行的。你想一下，如果每个主题中只存在一个队列，这个队列中也维护着每个消费者组的消费位置，这样也可以做到 <strong>发布订阅模式</strong> 。如下图。</p>
+<p><img src="https://my-blog-to-use.oss-cn-beijing.aliyuncs.com/2019-11/16ef38600cdb6d4b.jpg"></p>
+<p>但是，这样我生产者是不是只能向一个队列发送消息？又因为需要维护消费位置所以一个队列只能对应一个消费者组中的消费者，这样是不是其他的 <code>Consumer</code> 就没有用武之地了？从这两个角度来讲，并发度一下子就小了很多。</p>
+<p>所以总结来说，<code>RocketMQ</code> 通过<strong>使用在一个 <code>Topic</code> 中配置多个队列并且每个队列维护每个消费者组的消费位置</strong> 实现了 <strong>主题模式/发布订阅模式</strong> 。</p>
+<h2 id="Kafka"><a href="#Kafka" class="headerlink" title="Kafka"></a>Kafka</h2>
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/MessageQueue/" rel="tag"># MessageQueue</a>
+              <a href="/tags/RabbitMQ/" rel="tag"># RabbitMQ</a>
+              <a href="/tags/RocketMQ/" rel="tag"># RocketMQ</a>
+              <a href="/tags/Kafka/" rel="tag"># Kafka</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2021/08/30/MQ%E4%B9%8B%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97%E6%A6%82%E8%BF%B0/" rel="prev" title="MQ之消息队列概述">
+                  <i class="fa fa-chevron-left"></i> MQ之消息队列概述
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2021/08/31/%E6%95%B0%E6%8D%AE%E5%BA%93%E4%B9%8B%E5%88%86%E5%BA%93%E5%88%86%E8%A1%A8/" rel="next" title="数据库之分库分表">
+                  数据库之分库分表 <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Ghuilrei</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/" rel="noopener" target="_blank">NexT.Gemini</a>
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <script src="https://cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/next-boot.js"></script>
+
+  
+
+
+
+
+  
+
+
+
+
+  
+
+  <script class="next-config" data-name="enableMath" type="application/json">true</script><script class="next-config" data-name="mathjax" type="application/json">{"enable":true,"tags":"none","js":{"url":"https://cdn.jsdelivr.net/npm/mathjax@3.1.4/es5/tex-mml-chtml.js","integrity":"sha256-ncNI9OXOS5Ek4tzVYiOMmN/KKCPZ6V0Cpv2P/zHntiA="}}</script>
+<script src="/js/third-party/math/mathjax.js"></script>
+
+
+
+</body>
+</html>

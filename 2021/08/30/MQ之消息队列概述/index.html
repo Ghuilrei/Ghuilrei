@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.3/css/all.min.css" integrity="sha256-2H3fkXt6FEmrReK448mDVGKb3WW2ZZw35gI7vqHOE4Y=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"blog.sunyh512.cn","root":"/","images":"/images","scheme":"Gemini","version":"8.5.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":false,"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"Searching...","empty":"We didn't find any results for the search: ${query}","hits_time":"${hits} results found in ${time} ms","hits":"${hits} results found"}}</script><script src="/js/config.js"></script>
+<meta name="description" content="消息队列已经逐渐成为企业IT系统内部通信的核心手段。 它具有低耦合、可靠投递、广播、流量控制、最终一致性等一系列功能，成为异步RPC的主要手段之一。 当今市面上有很多主流的消息中间件，如老牌的ActiveMQ、RabbitMQ，炙手可热的Kafka，阿里巴巴自主开发RocketMQ等。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="MQ之消息队列概述">
+<meta property="og:url" content="http://blog.sunyh512.cn/2021/08/30/MQ%E4%B9%8B%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97%E6%A6%82%E8%BF%B0/index.html">
+<meta property="og:site_name" content="Ghuilrei&#39;s Blog">
+<meta property="og:description" content="消息队列已经逐渐成为企业IT系统内部通信的核心手段。 它具有低耦合、可靠投递、广播、流量控制、最终一致性等一系列功能，成为异步RPC的主要手段之一。 当今市面上有很多主流的消息中间件，如老牌的ActiveMQ、RabbitMQ，炙手可热的Kafka，阿里巴巴自主开发RocketMQ等。">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="http://img.sunyh512.cn/img/20210830101546.png">
+<meta property="og:image" content="http://img.sunyh512.cn/img/20210830102110.png">
+<meta property="og:image" content="http://img.sunyh512.cn/img/20210830164222.jpg">
+<meta property="og:image" content="http://img.sunyh512.cn/img/20210830164301.jpg">
+<meta property="article:published_time" content="2021-08-30T02:01:19.000Z">
+<meta property="article:modified_time" content="2021-08-30T08:57:06.260Z">
+<meta property="article:author" content="Ghuilrei">
+<meta property="article:tag" content="MessageQueue">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://img.sunyh512.cn/img/20210830101546.png">
+
+
+<link rel="canonical" href="http://blog.sunyh512.cn/2021/08/30/MQ%E4%B9%8B%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97%E6%A6%82%E8%BF%B0/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"en","comments":true,"permalink":"http://blog.sunyh512.cn/2021/08/30/MQ%E4%B9%8B%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97%E6%A6%82%E8%BF%B0/","path":"2021/08/30/MQ之消息队列概述/","title":"MQ之消息队列概述"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>MQ之消息队列概述 | Ghuilrei's Blog</title>
+  
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <h1 class="site-title">Ghuilrei's Blog</h1>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu">
+        <li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a></li>
+        <li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a></li>
+        <li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a></li>
+        <li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a></li>
+        <li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a></li>
+        <li class="menu-item menu-item-schedule"><a href="/schedule/" rel="section"><i class="fa fa-calendar fa-fw"></i>Schedule</a></li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%B6%88%E6%81%AF%E4%B8%AD%E9%97%B4%E4%BB%B6%E7%9A%84%E7%BB%84%E6%88%90"><span class="nav-number">1.</span> <span class="nav-text">消息中间件的组成</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%B6%88%E6%81%AF%E4%B8%AD%E9%97%B4%E4%BB%B6%E6%A8%A1%E5%BC%8F%E5%88%86%E7%B1%BB"><span class="nav-number">2.</span> <span class="nav-text">消息中间件模式分类</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%82%B9%E5%AF%B9%E7%82%B9"><span class="nav-number">2.1.</span> <span class="nav-text">点对点</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%8F%91%E5%B8%83-%E8%AE%A2%E9%98%85"><span class="nav-number">2.2.</span> <span class="nav-text">发布&#x2F;订阅</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%B6%88%E6%81%AF%E4%B8%AD%E9%97%B4%E4%BB%B6%E7%9A%84%E4%BC%98%E7%82%B9"><span class="nav-number">3.</span> <span class="nav-text">消息中间件的优点</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%B6%88%E6%81%AF%E4%B8%AD%E9%97%B4%E4%BB%B6%E5%BA%94%E7%94%A8%E5%9C%BA%E6%99%AF"><span class="nav-number">4.</span> <span class="nav-text">消息中间件应用场景</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%B6%88%E6%81%AF%E4%B8%AD%E9%97%B4%E4%BB%B6%E5%B8%B8%E7%94%A8%E5%8D%8F%E8%AE%AE"><span class="nav-number">5.</span> <span class="nav-text">消息中间件常用协议</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%B8%B8%E8%A7%81%E6%B6%88%E6%81%AF%E4%B8%AD%E9%97%B4%E4%BB%B6MQ%E4%BB%8B%E7%BB%8D"><span class="nav-number">6.</span> <span class="nav-text">常见消息中间件MQ介绍</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#RocketMQ"><span class="nav-number">6.1.</span> <span class="nav-text">RocketMQ</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#RabbitMQ"><span class="nav-number">6.2.</span> <span class="nav-text">RabbitMQ</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#ActiveMQ"><span class="nav-number">6.3.</span> <span class="nav-text">ActiveMQ</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Redis"><span class="nav-number">6.4.</span> <span class="nav-text">Redis</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Kafka"><span class="nav-number">6.5.</span> <span class="nav-text">Kafka</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#ZeroMQ"><span class="nav-number">6.6.</span> <span class="nav-text">ZeroMQ</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97%E5%BA%94%E7%94%A8%E5%9C%BA%E6%99%AF"><span class="nav-number">7.</span> <span class="nav-text">消息队列应用场景</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%BC%82%E6%AD%A5%E5%A4%84%E7%90%86"><span class="nav-number">7.1.</span> <span class="nav-text">异步处理</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%BA%94%E7%94%A8%E8%A7%A3%E8%80%A6"><span class="nav-number">7.2.</span> <span class="nav-text">应用解耦</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E7%A4%BA%E4%BE%8B%EF%BC%9A"><span class="nav-number">7.2.1.</span> <span class="nav-text">示例：</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%B5%81%E9%87%8F%E5%89%8A%E9%94%8B"><span class="nav-number">7.3.</span> <span class="nav-text">流量削锋</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%97%A5%E5%BF%97%E5%A4%84%E7%90%86"><span class="nav-number">7.4.</span> <span class="nav-text">日志处理</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E7%A4%BA%E4%BE%8B%EF%BC%9A-1"><span class="nav-number">7.4.1.</span> <span class="nav-text">示例：</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%B6%88%E6%81%AF%E9%80%9A%E8%AE%AF"><span class="nav-number">7.5.</span> <span class="nav-text">消息通讯</span></a></li></ol></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-overview">
+            <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Ghuilrei"
+      src="http://img.sunyh512.cn/img/20210803143027.jpeg">
+  <p class="site-author-name" itemprop="name">Ghuilrei</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">53</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">22</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">43</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+          </div>
+        </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+  <div class="back-to-top" role="button" aria-label="Back to top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://blog.sunyh512.cn/2021/08/30/MQ%E4%B9%8B%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97%E6%A6%82%E8%BF%B0/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="http://img.sunyh512.cn/img/20210803143027.jpeg">
+      <meta itemprop="name" content="Ghuilrei">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Ghuilrei's Blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          MQ之消息队列概述
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">Posted on</span>
+      
+
+      <time title="Created: 2021-08-30 10:01:19 / Modified: 16:57:06" itemprop="dateCreated datePublished" datetime="2021-08-30T10:01:19+08:00">2021-08-30</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">In</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/MessageQueue/" itemprop="url" rel="index"><span itemprop="name">MessageQueue</span></a>
+        </span>
+    </span>
+
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <p>消息队列已经逐渐成为企业IT系统内部通信的核心手段。</p>
+<p>它具有低耦合、可靠投递、广播、流量控制、最终一致性等一系列功能，成为异步RPC的主要手段之一。</p>
+<p>当今市面上有很多主流的消息中间件，如老牌的ActiveMQ、RabbitMQ，炙手可热的Kafka，阿里巴巴自主开发RocketMQ等。</p>
+<span id="more"></span>
+
+<h2 id="消息中间件的组成"><a href="#消息中间件的组成" class="headerlink" title="消息中间件的组成"></a>消息中间件的组成</h2><ul>
+<li><p>Broker：消息服务器</p>
+<p>  作为server提供消息核心服务</p>
+</li>
+<li><p>Producer：消息生产者</p>
+<p>  业务的发起方，负责生产消息传输给broker</p>
+</li>
+<li><p>Consumer：消息消费者，</p>
+<p>  业务的处理方，负责从broker获取消息并进行业务逻辑处理</p>
+</li>
+<li><p>Topic：主题</p>
+<p>  发布订阅模式下的消息统一汇集地，不同生产者向topic发送消息，由MQ服务器分发到不同的订阅者，实现消息的    广播</p>
+</li>
+<li><p>Queue：队列</p>
+<p>  PTP模式下，特定生产者向特定queue发送消息，消费者订阅特定的queue完成指定消息的接收</p>
+</li>
+<li><p>Message：消息体</p>
+<p>  根据不同通信协议定义的固定格式进行编码的数据包，来封装业务数据，实现消息的传输</p>
+</li>
+</ul>
+<h2 id="消息中间件模式分类"><a href="#消息中间件模式分类" class="headerlink" title="消息中间件模式分类"></a>消息中间件模式分类</h2><h3 id="点对点"><a href="#点对点" class="headerlink" title="点对点"></a>点对点</h3><p>PTP点对点：使用queue作为通信载体</p>
+<p>消息生产者生产消息发送到queue中，然后消息消费者从queue中取出并且消费消息。 </p>
+<p>消息被消费以后，queue中不再存储，所以消息消费者不可能消费到已经被消费的消息。</p>
+<p><strong>Queue：</strong></p>
+<p>Queue支持存在多个消费者，但是对一个消息而言，只会有一个消费者可以消费。</p>
+<p>Queue实现了负载均衡，将producer生产的消息发送到消息队列中，由多个消费者消费。</p>
+<p>但一个消息只能被一个消费者接受，当没有消费者可用时，这个消息会被保存直到有一个可用的消费者。 </p>
+<p><img src="http://img.sunyh512.cn/img/20210830101546.png" alt="img"></p>
+<h3 id="发布-订阅"><a href="#发布-订阅" class="headerlink" title="发布/订阅"></a>发布/订阅</h3><p>Pub/Sub发布订阅（广播）：使用topic作为通信载体</p>
+<p>消息生产者（发布）将消息发布到topic中，同时有多个消息消费者（订阅）消费该消息。</p>
+<p>和点对点方式不同，发布到topic的消息会被所有订阅者消费。</p>
+<p>topic实现了发布和订阅，当你发布一个消息，所有订阅这个topic的服务都能得到这个消息，所以从1到N个订阅者都能得到一个消息的拷贝。</p>
+<p><img src="http://img.sunyh512.cn/img/20210830102110.png" alt="img"></p>
+<h2 id="消息中间件的优点"><a href="#消息中间件的优点" class="headerlink" title="消息中间件的优点"></a>消息中间件的优点</h2><ul>
+<li><p>系统解耦</p>
+<p>  交互系统之间没有直接的调用关系，只是通过消息传输，故系统侵入性不强，耦合度低。</p>
+</li>
+<li><p>提高系统响应时间</p>
+<p>  例如原来的一套逻辑，完成支付可能涉及先修改订单状态、计算会员积分、通知物流配送几个逻辑才能完成；</p>
+<p>  通过MQ架构设计，就可将紧急重要（需要立刻响应）的业务放到该调用方法中，响应要求不高的使用消息队列，放到MQ队列中，供消费者处理。</p>
+</li>
+<li><p>为大数据处理架构提供服务</p>
+<p>  通过消息作为整合，大数据的背景下，消息队列还与实时处理架构整合，为数据处理提供性能支持。</p>
+<blockquote>
+<p>  大数据架构关键特性：</p>
+<ol>
+<li>  容错性和健壮性：分布式系统所必须的，好比微服务架构，你无法保证肯定不出错但也不能总出错</li>
+<li>  低延迟：很多应用对于读和写操作的延时要求非常高，要求对更新和查询的响应是低延时的。</li>
+<li>  横向扩容：数据的增幅增速是惊人的，系统需要能通过横向拓展满足与日俱增的数据增量</li>
+<li>  可扩展：扩展新功能时付出较少的代价</li>
+<li>  方便查询：大数据系统本质还是需要输出的，输出的数据需要方便查询</li>
+<li>  易于维护</li>
+</ol>
+<p>  目前主流的大数据处理架构，这里就讲两个: <strong>Lambda架构</strong> 和 <strong>Kappa架构</strong></p>
+<p>  需要注意的是，Lambda 和 Kappa 两大架构都不是一个具有实体的软件产品，而是一个指导大数据系统搭建的架构模型。</p>
+<p>  因此，用户可以根据自己的需要，在架构模型中任意集成Hadoop，Hbase，Kafka，Storm，Spark、Flink等各类大数据组件。</p>
+</blockquote>
+</li>
+<li><p>Java消息服务</p>
+<p>  Java消息服务，应用程序接口是一个Java平台中关于面向消息中间件（MOM）的API，用于在两个应用程序之间，或分布式系统中发送消息，进行异步通信。 </p>
+<p>  JMS中的P2P和Pub/Sub消息模式：点对点（point to point， queue）与发布订阅（publish/subscribe，topic）最初是由JMS定义的。这两种模式主要区别或解决的问题就是发送到队列的消息能否重复消费(多订阅)。</p>
+</li>
+</ul>
+<h2 id="消息中间件应用场景"><a href="#消息中间件应用场景" class="headerlink" title="消息中间件应用场景"></a>消息中间件应用场景</h2><ul>
+<li>异步通信</li>
+</ul>
+<p>有些业务不想也不需要立即处理消息。</p>
+<p>消息队列提供了异步处理机制，允许用户把一个消息放入队列，但并不立即处理它。</p>
+<p>想向队列中放入多少消息就放多少，然后在需要的时候再去处理它们。</p>
+<ul>
+<li>解耦</li>
+</ul>
+<p>降低工程间的强依赖程度，针对异构系统进行适配。</p>
+<p>在项目启动之初来预测将来项目会碰到什么需求，是极其困难的，所以需要减少耦合度，以方便扩展。</p>
+<p>通过消息系统在处理过程中间插入了一个隐含的、基于数据的接口层，两边的处理过程都要实现这一接口，当应用发生变化时，可以独立的扩展或修改两边的处理过程，只要确保它们遵守同样的接口约束。</p>
+<ul>
+<li>冗余</li>
+</ul>
+<p>有些情况下，处理数据的过程会失败，除非数据被持久化，否则将造成丢失。</p>
+<p>消息队列把数据进行持久化直到它们已经被完全处理，通过这一方式规避了数据丢失风险。</p>
+<p>许多消息队列在把一个消息从队列中删除之前，需要你的处理系统明确的指出该消息已经被处理完毕，从而确保你的数据被安全的保存直到你使用完毕。</p>
+<ul>
+<li>扩展性</li>
+</ul>
+<p>因为消息队列解耦了你的处理过程，所以增大消息入队和处理的频率是很容易的，只要另外增加处理过程即可。不需要改变代码、不需要调节参数。便于分布式扩容。</p>
+<ul>
+<li>过载保护</li>
+</ul>
+<p>在访问量剧增的情况下，应用仍然需要继续发挥作用，但是这样的突发流量无法提取预知；如果以为了能处理这类瞬间峰值访问为标准来投入资源随时待命无疑是巨大的浪费。使用消息队列能够使关键组件顶住突发的访问压力，而不会因为突发的超负荷的请求而完全崩溃。</p>
+<ul>
+<li>可恢复性</li>
+</ul>
+<p>系统的一部分组件失效时，不会影响到整个系统。消息队列降低了进程间的耦合度，所以即使一个处理消息的进程挂掉，加入队列中的消息仍然可以在系统恢复后被处理。</p>
+<ul>
+<li>顺序保证</li>
+</ul>
+<p>在大多使用场景下，数据处理的顺序都很重要。大部分消息队列本来就是排序的，并且能保证数据会按照特定的顺序来处理。</p>
+<ul>
+<li>缓冲</li>
+</ul>
+<p>在任何重要的系统中，都会有需要不同的处理时间的元素。消息队列通过一个缓冲层来帮助任务最高效率的执行，该缓冲有助于控制和优化数据流经过系统的速度。以调节系统响应时间。</p>
+<ul>
+<li>数据流处理</li>
+</ul>
+<p>分布式系统产生的海量数据流，如：业务日志、监控数据、用户行为等，针对这些数据流进行实时或批量采集汇总，然后进行大数据分析是当前互联网的必备技术，通过消息队列完成此类数据收集是最好的选择。</p>
+<h2 id="消息中间件常用协议"><a href="#消息中间件常用协议" class="headerlink" title="消息中间件常用协议"></a>消息中间件常用协议</h2><ul>
+<li>  AMQP协议</li>
+</ul>
+<p>AMQP即Advanced Message Queuing Protocol，一个提供统一消息服务的应用层标准高级消息队列协议，是应用层协议的一个开放标准，为面向消息的中间件设计。</p>
+<p>基于此协议的客户端与消息中间件可传递消息，并不受客户端/中间件不同产品，不同开发语言等条件的限制。 </p>
+<p>优点：可靠、通用</p>
+<ul>
+<li>  MQTT协议</li>
+</ul>
+<p>MQTT（Message Queuing Telemetry Transport，消息队列遥测传输）是IBM开发的一个即时通讯协议，有可能成为物联网的重要组成部分。</p>
+<p>该协议支持所有平台，几乎可以把所有联网物品和外部连接起来，被用来当做传感器和致动器（比如通过Twitter让房屋联网）的通信协议。 </p>
+<p>优点：格式简洁、占用带宽小、移动端通信、PUSH、嵌入式系统</p>
+<ul>
+<li>  STOMP协议</li>
+</ul>
+<p>STOMP（Streaming Text Orientated Message Protocol）是流文本定向消息协议，是一种为MOM(Message Oriented Middleware，面向消息的中间件)设计的简单文本协议。</p>
+<p>STOMP提供一个可互操作的连接格式，允许客户端与任意STOMP消息代理（Broker）进行交互。 </p>
+<p>优点：命令模式（非topic\queue模式）</p>
+<ul>
+<li>  XMPP协议</li>
+</ul>
+<p>XMPP（可扩展消息处理现场协议，Extensible Messaging and Presence Protocol）是基于可扩展标记语言（XML）的协议，多用于即时消息（IM）以及在线现场探测。适用于服务器之间的准即时操作。核心是基于XML流传输，这个协议可能最终允许因特网用户向因特网上的其他任何人发送即时消息，即使其操作系统和浏览器不同。<br>优点：通用公开、兼容性强、可扩展、安全性高，但XML编码格式占用带宽大</p>
+<ul>
+<li>  其他基于TCP/IP自定义的协议</li>
+</ul>
+<p>有些特殊框架（如：redis、kafka、zeroMq等）根据自身需要未严格遵循MQ规范，而是基于TCP\IP自行封装了一套协议，通过网络socket接口进行传输，实现了MQ的功能。</p>
+<h2 id="常见消息中间件MQ介绍"><a href="#常见消息中间件MQ介绍" class="headerlink" title="常见消息中间件MQ介绍"></a>常见消息中间件MQ介绍</h2><h3 id="RocketMQ"><a href="#RocketMQ" class="headerlink" title="RocketMQ"></a>RocketMQ</h3><p>阿里系下开源的一款分布式、队列模型的消息中间件，是阿里参照kafka设计思想使用java实现的一套mq。</p>
+<p>同时将阿里系内部多款mq产品（Notify、metaq）进行整合，只维护核心功能，去除了所有其他运行时依赖，保证核心功能最简化，在此基础上配合阿里上述其他开源产品实现不同场景下mq的架构，目前主要多用于订单交易系统。</p>
+<p>具有以下特点：</p>
+<ul>
+<li>  能够保证严格的消息顺序</li>
+<li>  提供针对消息的过滤功能</li>
+<li>  提供丰富的消息拉取模式</li>
+<li>  高效的订阅者水平扩展能力</li>
+<li>  实时的消息订阅机制</li>
+<li>  亿级消息堆积能力</li>
+</ul>
+<h3 id="RabbitMQ"><a href="#RabbitMQ" class="headerlink" title="RabbitMQ"></a>RabbitMQ</h3><p>使用<code>Erlang</code>编写的一个开源的消息队列，本身支持很多的协议：<code>AMQP</code>、<code>XMPP</code>、 <code>SMTP</code>、<code>STOMP</code>，也正是如此，使的它变的非常重量级，更适合于企业级的开发。</p>
+<p>同时实现了Broker架构，核心思想是生产者不会将消息直接发送给队列，消息在发送给客户端时先在中心队列排队。</p>
+<p>对路由(Routing)，负载均衡(Load balance)、数据持久化都有很好的支持。多用于进行企业级的ESB整合。</p>
+<h3 id="ActiveMQ"><a href="#ActiveMQ" class="headerlink" title="ActiveMQ"></a>ActiveMQ</h3><p>Apache下的一个子项目。</p>
+<p>使用Java完全支持JMS1.1和J2EE 1.4规范的 JMS Provider实现，少量代码就可以高效地实现高级应用场景。</p>
+<p>可插拔的传输协议支持，比如：in-VM, TCP, SSL, NIO, UDP, multicast, JGroups and JXTA transports。</p>
+<p>RabbitMQ、ZeroMQ、ActiveMQ均支持常用的多种语言客户端 C++、Java、.Net,、Python、 Php、 Ruby等。</p>
+<h3 id="Redis"><a href="#Redis" class="headerlink" title="Redis"></a>Redis</h3><p>使用C语言开发的一个Key-Value的NoSQL数据库，开发维护很活跃，虽然它是一个Key-Value数据库存储系统，但它本身支持MQ功能，所以完全可以当做一个轻量级的队列服务来使用。</p>
+<p>对于RabbitMQ和Redis的入队和出队操作，各执行100万次，每10万次记录一次执行时间。</p>
+<p>测试数据分为128Bytes、512Bytes、1K和10K四个不同大小的数据。</p>
+<p>实验表明：</p>
+<ul>
+<li>  入队时，当数据比较小时Redis的性能要高于RabbitMQ，而如果数据大小超过了10K，Redis则慢的无法忍受；</li>
+<li>  出队时，无论数据大小，Redis都表现出非常好的性能，而RabbitMQ的出队性能则远低于Redis。</li>
+</ul>
+<h3 id="Kafka"><a href="#Kafka" class="headerlink" title="Kafka"></a>Kafka</h3><p>Apache下的一个子项目，使用scala实现的一个高性能分布式Publish/Subscribe消息队列系统，具有以下特性：</p>
+<ul>
+<li>  快速持久化：通过磁盘顺序读写与零拷贝机制，可以在O(1)的系统开销下进行消息持久化；</li>
+<li>  高吞吐：在一台普通的服务器上既可以达到10W/s的吞吐速率；</li>
+<li>  高堆积：支持topic下消费者较长时间离线，消息堆积量大；</li>
+<li>  完全的分布式系统：Broker、Producer、Consumer都原生自动支持分布式，依赖zookeeper自动实现复杂均衡；</li>
+<li>  支持Hadoop数据并行加载：对于像Hadoop的一样的日志数据和离线分析系统，但又要求实时处理的限制，这是一个可行的解决方案。</li>
+</ul>
+<h3 id="ZeroMQ"><a href="#ZeroMQ" class="headerlink" title="ZeroMQ"></a>ZeroMQ</h3><p>号称最快的消息队列系统，专门为高吞吐量/低延迟的场景开发，在金融界的应用中经常使用，偏重于实时数据通信场景。</p>
+<p>ZMQ能够实现RabbitMQ不擅长的高级/复杂的队列，但是开发人员需要自己组合多种技术框架，开发成本高。</p>
+<p>因此ZeroMQ具有一个独特的非中间件的模式，更像一个socket library，你不需要安装和运行一个消息服务器或中间件，因为你的应用程序本身就是使用ZeroMQ API完成逻辑服务的角色。</p>
+<p>但是ZeroMQ仅提供非持久性的队列，如果宕机，数据将会丢失。</p>
+<p>ZeroMQ套接字是与传输层无关的：ZeroMQ套接字对所有传输层协议定义了统一的API接口。</p>
+<p>默认支持 进程内(inproc) ，进程间(IPC) ，多播，TCP协议，在不同的协议之间切换只要简单的改变连接字符串的前缀。</p>
+<p>可以在任何时候以最小的代价从进程间的本地通信切换到分布式下的TCP通信。</p>
+<p>ZeroMQ在背后处理连接建立，断开和重连逻辑。</p>
+<p>特性：</p>
+<ul>
+<li>  无锁的队列模型：对于跨线程间的交互（用户端和session）之间的数据交换通道pipe，采用无锁的队列算法CAS；在pipe的两端注册有异步事件，在读或者写消息到pipe的时，会自动触发读写事件。</li>
+<li>  批量处理的算法：对于批量的消息，进行了适应性的优化，可以批量的接收和发送消息。</li>
+<li>  多核下的线程绑定，无须CPU切换：区别于传统的多线程并发模式，信号量或者临界区，zeroMQ充分利用多核的优势，每个核绑定运行一个工作者线程，避免多线程之间的CPU切换开销。</li>
+</ul>
+<h2 id="消息队列应用场景"><a href="#消息队列应用场景" class="headerlink" title="消息队列应用场景"></a>消息队列应用场景</h2><p>异步处理，应用解耦，流量削锋和消息通讯四个场景。</p>
+<h3 id="异步处理"><a href="#异步处理" class="headerlink" title="异步处理"></a>异步处理</h3><p>用户注册后，需要发注册邮件和注册短信。传统的做法有两种：</p>
+<ol>
+<li><p>串行方式</p>
+<p>  将注册信息写入数据库成功后，发送注册邮件，再发送注册短信。以上三个任务全部完成后，返回给客户端。</p>
+</li>
+<li><p>并行方式</p>
+<p>  将注册信息写入数据库成功后，发送注册邮件的同时，发送注册短信。以上三个任务完成后，返回给客户端。</p>
+<p>  与串行的差别是，并行的方式可以提高处理的时间</p>
+</li>
+</ol>
+<p>假设三个业务节点每个使用50毫秒钟，不考虑网络等其他开销，则串行方式的时间是150毫秒，并行的时间可能是100毫秒。</p>
+<p>因为CPU在单位时间内处理的请求数是一定的，则串行方式1秒内CPU可处理的请求量是7次（1000/150）。并行方式处理的请求量是10次（1000/100）。</p>
+<p>引入消息队列，将不是必须的业务逻辑，异步处理。改造后的架构如下：</p>
+<ol>
+<li>  按照以上约定，用户的响应时间相当于是注册信息写入数据库的时间，也就是50毫秒。</li>
+<li>  注册邮件，发送短信业务写入消息队列后，直接返回。</li>
+</ol>
+<p>写入消息队列的速度很快，基本可以忽略，因此用户的响应时间可能是50毫秒。</p>
+<p>因此架构改变后，系统的吞吐量提高到每秒20 QPS。比串行提高了3倍，比并行提高了两倍。</p>
+<h3 id="应用解耦"><a href="#应用解耦" class="headerlink" title="应用解耦"></a>应用解耦</h3><p>用户下单后，订单系统需要通知库存系统。传统的做法是，订单系统调用库存系统的接口。</p>
+<p>缺点：假如库存系统无法访问，则订单减库存将失败，从而导致订单失败，订单系统与库存系统耦合。</p>
+<p>引入应用消息队列后的方案：</p>
+<ul>
+<li><p>  订单系统：用户下单后，订单系统完成持久化处理，将消息写入消息队列，返回用户订单下单成功。</p>
+</li>
+<li><p>  库存系统：订阅下单的消息，采用拉/推的方式，获取下单信息，库存系统根据下单信息，进行库存操作。</p>
+</li>
+</ul>
+<p>假如在下单时库存系统不能正常使用，也不影响正常下单。因为下单后，订单系统写入消息队列就不再关心其他的后续操作了。</p>
+<p>实现订单系统与库存系统的应用解耦。</p>
+<h4 id="示例："><a href="#示例：" class="headerlink" title="示例："></a>示例：</h4><p><img src="http://img.sunyh512.cn/img/20210830164222.jpg" alt="img"></p>
+<p>消息队列采用高可用，可持久化的消息中间件。比如Active MQ，Rabbit MQ，Rocket Mq。</p>
+<ol>
+<li>  应用将主干逻辑处理完成后，写入消息队列。消息发送是否成功可以开启消息的确认模式。（消息队列返回消息接收成功状态后，应用再返回，这样保障消息的完整性）</li>
+<li>  扩展流程（发短信，配送处理）订阅队列消息。采用推或拉的方式获取消息并处理。</li>
+<li>  消息将应用解耦的同时，带来了数据一致性问题，可以采用最终一致性方式解决。比如主数据写入数据库，扩展应用根据消息队列，并结合数据库方式实现基于消息队列的后续处理。</li>
+</ol>
+<h3 id="流量削锋"><a href="#流量削锋" class="headerlink" title="流量削锋"></a>流量削锋</h3><p>流量削锋也是消息队列中的常用场景，一般在秒杀或团抢活动中使用广泛。</p>
+<p>应用场景：秒杀活动，一般会因为流量过大，导致流量暴增，应用挂掉。</p>
+<p>为解决这个问题，一般需要在应用前端加入消息队列。</p>
+<p>优点：</p>
+<ul>
+<li>  可以控制活动的人数</li>
+<li>  可以缓解短时间内高流量压垮应用</li>
+</ul>
+<p>用户的请求，服务器接收后，首先写入消息队列。</p>
+<p>假如消息队列长度超过最大数量，则直接抛弃用户请求或跳转到错误页面。</p>
+<p>秒杀业务根据消息队列中的请求信息，再做后续处理。</p>
+<h3 id="日志处理"><a href="#日志处理" class="headerlink" title="日志处理"></a>日志处理</h3><p>日志处理是指将消息队列用在日志处理中，比如Kafka的应用，解决大量日志传输的问题。</p>
+<p>日志采集客户端：负责日志数据采集，定时写入Kafka队列。</p>
+<p>Kafka消息队列：负责日志数据的接收，存储和转发。</p>
+<p>日志处理应用：订阅并消费kafka队列中的日志数据。</p>
+<h4 id="示例：-1"><a href="#示例：-1" class="headerlink" title="示例："></a>示例：</h4><p><img src="http://img.sunyh512.cn/img/20210830164301.jpg" alt="img"></p>
+<p>分为Zookeeper注册中心、日志收集客户端、Kafka集群和Storm集群（OtherApp）四部分组成。</p>
+<ul>
+<li>  Zookeeper注册中心，提出负载均衡和地址查找服务</li>
+<li>  日志收集客户端，用于采集应用系统的日志，并将数据推送到kafka队列</li>
+<li>  Kafka集群：接收，路由，存储，转发等消息处理</li>
+<li>  Storm集群：与OtherApp处于同一级别，采用拉的方式消费队列中的数据</li>
+</ul>
+<blockquote>
+<p>  Storm是一个流式计算框架，数据源源不断的产生，源源不断的收集，源源不断的计算。</p>
+<p>  数据实时产生、实时传输、实时计算、实时展示</p>
+<p>  Storm只负责数据的计算，不负责数据的存储</p>
+</blockquote>
+<h3 id="消息通讯"><a href="#消息通讯" class="headerlink" title="消息通讯"></a>消息通讯</h3><p>消息通讯是指，消息队列一般都内置了高效的通信机制，因此也可以用在纯的消息通讯。</p>
+<p>比如实现点对点消息队列，或者聊天室等</p>
+<hr>
+<p><strong>转自：</strong></p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/MessageQueue/" rel="tag"># MessageQueue</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2021/08/26/%E5%AE%9E%E7%8E%B0%E9%A2%98-LRU%E7%BC%93%E5%AD%98%E6%9C%BA%E5%88%B6/" rel="prev" title="实现题-LRU缓存机制">
+                  <i class="fa fa-chevron-left"></i> 实现题-LRU缓存机制
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2021/08/30/MQ%E4%B9%8B%E5%B8%B8%E7%94%A8%E7%9A%84%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/" rel="next" title="MQ之常用的消息队列">
+                  MQ之常用的消息队列 <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Ghuilrei</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/" rel="noopener" target="_blank">NexT.Gemini</a>
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <script src="https://cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/next-boot.js"></script>
+
+  
+
+
+
+
+  
+
+
+
+
+  
+
+  <script class="next-config" data-name="enableMath" type="application/json">true</script><script class="next-config" data-name="mathjax" type="application/json">{"enable":true,"tags":"none","js":{"url":"https://cdn.jsdelivr.net/npm/mathjax@3.1.4/es5/tex-mml-chtml.js","integrity":"sha256-ncNI9OXOS5Ek4tzVYiOMmN/KKCPZ6V0Cpv2P/zHntiA="}}</script>
+<script src="/js/third-party/math/mathjax.js"></script>
+
+
+
+</body>
+</html>
